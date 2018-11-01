@@ -65,7 +65,7 @@ void MqttRpcClientQt::on_message(const QMQTT::Message& message) {
        op_response_map.insert("ts", QDateTime::currentSecsSinceEpoch());
        // TODO: verify the type of the finished field
        command->finished = op_response_map.value("finished").toBool() || command->finished;
-       command->process_response(json_obj.value("OpResponse").toObject().value("feedback").toObject(), msg_nr);
+       command->process_response(json_obj.value("opResponse").toObject().value("feedback").toObject(), msg_nr);
        if(command->is_finished() && command->is_successful()) {
            command->post_process();
            emit command_result(command);
