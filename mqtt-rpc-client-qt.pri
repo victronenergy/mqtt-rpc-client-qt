@@ -6,6 +6,8 @@ CONFIG += qt warn_on depend_includepath testcase
 TEMPLATE = app
 DEFINES += MQTTRPCCLIENTQT_LIBRARY
 
+INCLUDEPATH *= $$PWD/src
+
 SOURCES += \
     $$PWD/src/mqtt_rpc_client_qt.cpp \
     $$PWD/src/op_command.cpp \
