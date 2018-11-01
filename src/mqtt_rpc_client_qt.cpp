@@ -34,6 +34,7 @@ void MqttRpcClientQt::on_subscribe(const QString& topic, const quint8 qos) {
 void MqttRpcClientQt::on_connect() {
     qInfo() << QString("connected to mqtt broker: %1:%2").arg(host.toString(), port);
     mqtt_client->subscribe(get_full_topic("out"));
+    emit connected();
 }
 
 void MqttRpcClientQt::on_message(const QMQTT::Message& message) {

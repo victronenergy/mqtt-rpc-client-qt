@@ -35,6 +35,7 @@ public slots:
 
 signals:
     void command_result(OpCommand* command);
+    void connected();
 
 private:
     QHostAddress host;
