@@ -56,7 +56,7 @@ void MqttRpcClientQt::on_message(const QMQTT::Message& message) {
     QVariantMap op_response_map = root_json_map["opResponse"].toMap();
     QVariantMap op_response_feedback_map = op_response_map["feedback"].toMap();
     QString command_id = op_response_map["commandid"].toString();
-    int msg_nr = op_response_map["msg_nr"].toInt();
+    int msg_nr = op_response_map["msgnr"].toInt();
     qInfo() << "here: " << command_id << "  " << commands << "  " << op_response_map;
 
     if(commands.contains(command_id)) {

@@ -6,7 +6,7 @@
 #include "commands.h"
 #include "qmqtt.h"
 
-#define HOST "127.0.0.1"
+#define HOST "172.16.1.184"
 #define PORT 1883
 #define SITE_ID "9884e3966ef4"
 

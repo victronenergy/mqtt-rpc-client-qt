@@ -100,9 +100,9 @@ bool OpCommand::ensure_succesful() {
     return true;
 }
 
-void OpCommand::process_response(QJsonObject op_response, qint32 msgnr) {
-    responses[msgnr] = op_response;
-    // TOOD: set the last_response to the response with the highest msgnr
+void OpCommand::process_response(QJsonObject op_response, qint32 msg_nr) {
+    responses[msg_nr] = op_response;
+    // TOOD: set the last_response to the response with the highest msg_nr
     last_response = op_response;
 }
 

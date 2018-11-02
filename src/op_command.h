@@ -37,7 +37,7 @@ public:
 
     // should be void, throws error if fails, doesn't throw error if succesful, error handling not implemented yet hence bool
     bool ensure_succesful();
-    void process_response(QJsonObject op_response, qint32 msgnr);
+    void process_response(QJsonObject op_response, qint32 msg_nr);
     void post_process();
     bool finished = false;
     qint64 timestamp;
