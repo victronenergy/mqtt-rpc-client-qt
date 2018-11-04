@@ -10,6 +10,22 @@
 #include <QJsonObject>
 #include <QtDebug>
 #include <QDateTime>
+#include <QObject>
+#include <QAtomicInteger>
+
+#define MQTT_RPC_CMD_LOGGING_PREFIX "[MQTTRPCCMD]" << __FUNCTION__ << ": "
+
+#define MQTT_RPC_FIELD_COMMAND_ID "commandid"
+#define MQTT_RPC_FIELD_TIMESTAMP "ts"
+#define MQTT_RPC_RESP_FIELD_OPRESP "opResponse"
+#define MQTT_RPC_RESP_FIELD_FEEDBACK "feedback"
+#define MQTT_RPC_RESP_FIELD_FINISHED "finished"
+#define MQTT_RPC_RESP_FIELD_MSG_NR "msgnr"
+#define MQTT_RPC_REQ_FIELD_OPCMD "opCommand"
+#define MQTT_RPC_REQ_FIELD_SUBCMD "cmd"
+#define MQTT_RPC_RESP_FIELD_STATUS "status"
+#define MQTT_RPC_RESP_FIELD_ERROR "error"
+#define MQTT_RPC_RESP_FIELD_ERROR_CODE "error_code"
 
 #define EXIT_STATUS_NORMAL_EXIT "normal_exit"
 #define EXIT_STATUS_TIMEOUT "stopped_by_timeout"
@@ -25,34 +41,42 @@
 #define STATUS_FILE_RECEIVED "filereceivedok"
 #define STATUS_NO_FILE "nofile"
 
-class OpCommand {
+class OpCommand
+{
 public:
     OpCommand(const QHash<QString, QString> _arguments = QHash<QString, QString>());
     virtual ~OpCommand() {}
 
     QJsonArray serialize();
+    bool ensure_succesful();
+    void set_finished();
+    // should be void, throws error if fails, doesn't throw error if succesful, error handling not implemented yet hence bool
+    void process_response(QJsonObject op_response, qint32 msgnr);
+    void post_process();
+    void update_timestamp();
+    qint64 get_timestamp();
+
+    QJsonObject* get_result();
+
     bool is_finished();
     bool is_successful();
     bool is_timed_out();
 
-    // should be void, throws error if fails, doesn't throw error if succesful, error handling not implemented yet hence bool
-    bool ensure_succesful();
-    void process_response(QJsonObject op_response, qint32 msg_nr);
-    void post_process();
-    bool finished = false;
-    qint64 timestamp;
 protected:
+    qint32 get_timeout();
     virtual QString get_op_command() = 0;
     virtual QVector <QString> get_succesful_states();
     virtual QVector <QString> get_parameters();
-    virtual qint32 get_timeout();
 
+    qint64 timestamp = 0;
+    bool finished = false;
     QHash<QString, QString> arguments;
-    QJsonObject result;
     QString error_code;
     QString error_message;
-    QHash<qint32, QJsonObject> responses;
-    QJsonObject last_response;
+    QJsonObject* last_response;
+    QJsonObject* result;
+
+    // QHash<qint32, QJsonObject> responses;
     // missing: fields to define the fields that should be set dynamically
 };
 

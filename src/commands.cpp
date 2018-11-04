@@ -10,7 +10,7 @@ QString VupList::get_op_command() {
     return "vuplist";
 }
 bool VupList::is_succesful() {
-    return last_response["exitstatus"] == EXIT_STATUS_NORMAL_EXIT;
+    return last_response->value("exitstatus") == EXIT_STATUS_NORMAL_EXIT;
 }
 void VupList::post_process() {
     ensure_succesful();
@@ -33,12 +33,13 @@ QString DupList::get_op_command() {
 
 VregDeviceList::VregDeviceList(const QHash<QString, QString> _arguments) : OpCommand(_arguments) {}
 QString VregDeviceList::get_op_command() {
+    // TODO: change this to "vreg-device-list" when it has changed in mqtt-rpc, change when using it with mqtt-rpc >=1.17
     return "vregdevicelist";
 }
 
 VregSetGet::VregSetGet(const QHash<QString, QString> _arguments) : VregDeviceList(_arguments) {}
 QString VregSetGet::get_op_command() {
-    // TODO: change this to "vreg-set-get" when it has changed in mqtt-rpc
+    // TODO: change this to "vreg-get-set" when it has changed in mqtt-rpc, change when using it with mqtt-rpc >=1.17
     return "vregremoteconfig";
 }
 QVector<QString> VregSetGet::get_parameters() {

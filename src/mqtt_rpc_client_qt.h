@@ -19,9 +19,11 @@
 #define MQTT_SERVICE_NAME "qt"
 #define MQTT_QOS 1
 #define MQTT_TIMEOUT 60
+
 #define MQTT_RPC_RX "out"
 #define MQTT_RPC_TX "in"
 #define MQTT_RPC_TOPIC_FORMAT "P/%1/%2"
+#define MQTT_RPC_CLIENT_LOGGING_PREFIX "[MQTTRPCCLIENT]" << __FUNCTION__ << ": "
 
 class MQTTRPCCLIENTQTSHARED_EXPORT MqttRpcClientQt : public QObject
 {
@@ -32,6 +34,7 @@ public:
 
 public slots:
     void send_command(OpCommand* command);
+    void pingresp();
 
 signals:
     void command_result(OpCommand* command);

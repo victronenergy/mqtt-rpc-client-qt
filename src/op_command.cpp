@@ -5,13 +5,10 @@ OpCommand::OpCommand(const QHash<QString, QString> _arguments) : arguments(_argu
         QString parameter = get_parameters().at(i);
         if(!arguments.contains(parameter)) {
             // error, missing parameter
+            qWarning() << MQTT_RPC_CMD_LOGGING_PREFIX << "OpCommand construction failed, missing one or multiple arguments in the arguments hashmap. At least: " << parameter;
         }
     }
     // no error, everything you need is in the arguments
-}
-
-QString OpCommand::get_op_command() {
-    return "";
 }
 
 QVector<QString> OpCommand::get_succesful_states() {
@@ -38,10 +35,10 @@ QJsonArray OpCommand::serialize() {
     QList<QString> op_command_split = get_op_command().split('_');
     QString command = op_command_split[0];
     if(op_command_split.length() == 2) {
-        message_parameters.insert("cmd", op_command_split[1]);
+        message_parameters.insert(MQTT_RPC_REQ_FIELD_SUBCMD, op_command_split[1]);
     }
 
-    message_parameters.insert("commandid", token_urlsafe(8));
+    message_parameters.insert(MQTT_RPC_FIELD_COMMAND_ID, token_urlsafe(8));
 
     QJsonArray result = QJsonArray();
     result.append(command);
@@ -49,21 +46,39 @@ QJsonArray OpCommand::serialize() {
     return result;
 }
 
+void OpCommand::update_timestamp() {
+    timestamp = QDateTime::currentSecsSinceEpoch();
+}
+
+qint64 OpCommand::get_timestamp() {
+    return timestamp;
+}
+
+QJsonObject* OpCommand::get_result() {
+    return result;
+}
+
+void OpCommand::set_finished() {
+    finished = true;
+}
+
 bool OpCommand::is_finished() {
     return finished;
 }
 
 bool OpCommand::is_successful() {
+    qDebug() << MQTT_RPC_CMD_LOGGING_PREFIX << "is the command finished? " << is_finished();
+
     if(!is_finished()) {
-        qWarning() << "Not finished error";
+        qWarning() << MQTT_RPC_CMD_LOGGING_PREFIX << "Not finished error";
         // TODO: return notfinishederror
         return false;
     }
 
     bool success = true;
-    if(last_response.contains("status")) {
-        QString last_response_status = last_response.value("status").toString();
-        if(last_response_status == "error") {
+    if(last_response->contains(MQTT_RPC_RESP_FIELD_STATUS)) {
+        QString last_response_status = last_response->value(MQTT_RPC_RESP_FIELD_STATUS).toString();
+        if(last_response_status == MQTT_RPC_RESP_FIELD_ERROR) {
             success = false;
         } else {
             success = get_succesful_states().contains(last_response_status);
@@ -73,27 +88,23 @@ bool OpCommand::is_successful() {
 }
 
 bool OpCommand::is_timed_out() {
+    qDebug() << QDateTime::currentSecsSinceEpoch();
     if(timestamp == 0) {
-        qWarning() << "Command not sent error";
+        qWarning() << MQTT_RPC_CMD_LOGGING_PREFIX << "Command not sent error";
         // TODO: raise CommandNotSentError
         return false;
     }
-    qint64 last_activity_timestamp = timestamp;
-    if(last_response.contains("ts")) {
-        last_activity_timestamp = last_response.value("ts").toInt();
-    }
-
-    return QDateTime::currentSecsSinceEpoch() - last_activity_timestamp > get_timeout() && !is_finished();
+    return (QDateTime::currentSecsSinceEpoch() - timestamp) > get_timeout() && !is_finished();
 }
 
 bool OpCommand::ensure_succesful() {
     if(!is_successful()) {
-        if(last_response.value("error_code").toInt() == 999) {
-            qWarning() << "Already processing error";
+        if(last_response->value(MQTT_RPC_RESP_FIELD_ERROR_CODE).toInt() == 999) {
+            qWarning() << MQTT_RPC_CMD_LOGGING_PREFIX << "Already processing error";
             // TODO: return AlreadyProcessingError
             return false;
         }
-        qWarning() << "Command unsuccessful error";
+        qWarning() << MQTT_RPC_CMD_LOGGING_PREFIX << "Command unsuccessful error";
         // TODO: return CommandUnsucessfulError
         return false;
     }
@@ -101,20 +112,21 @@ bool OpCommand::ensure_succesful() {
 }
 
 void OpCommand::process_response(QJsonObject op_response, qint32 msg_nr) {
-    responses[msg_nr] = op_response;
-    // TOOD: set the last_response to the response with the highest msg_nr
-    last_response = op_response;
+    last_response = &op_response;
+    qDebug() << MQTT_RPC_CMD_LOGGING_PREFIX << "Processed message " << msg_nr << " --- JSON Object: " << op_response;
+    // TOOD: set the last_response to the response with the highest msgnr
+    // TODO: save response to a responses array to be able to handle multi message response mqtt-rpc commands
 }
 
 void OpCommand::post_process() {
     ensure_succesful();
-
-    if(responses.count() > 1) {
-        qWarning() << "Not implemented error, please add custom post-processing for this command!";
+    // if(responses.count() > 1) {
+    //    qWarning() << "Not implemented error, please add custom post-processing for this command!";
         // TODO: return AlreadyProcessingError
-        return;
-    }
+    //    return;
+    //}
 
-    result = responses[0];
+    // copy the last response into a QJsonObject on the heap, be sure to call delete on it afterwards to prevent memory leaking.
+    result = new QJsonObject(*last_response);
 }
 
