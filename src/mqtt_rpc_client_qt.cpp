@@ -102,13 +102,19 @@ void MqttRpcClientQt::on_message(const QMQTT::Message& message) {
     }
 }
 
-void MqttRpcClientQt::send_command(OpCommand* cmd) {
+QString MqttRpcClientQt::send_command(OpCommand* cmd) {
     cmd->update_timestamp();
     QJsonArray command = cmd->serialize();
     QJsonObject message {{MQTT_RPC_REQ_FIELD_OPCMD, command}, {MQTT_RPC_FIELD_TIMESTAMP, QString::number(cmd->get_timestamp())}};
-    commands.insert(command[1].toObject().value(MQTT_RPC_FIELD_COMMAND_ID).toString(), cmd);
+
+    QString commandId = command[1].toObject().value(MQTT_RPC_FIELD_COMMAND_ID).toString();
+    cmd->command_id = commandId;
+
+    commands.insert(commandId, cmd);
     QJsonDocument message_doc(message);
     send_message(message_doc.toJson(QJsonDocument::Compact));
+
+    return commandId;
 }
 
 void MqttRpcClientQt::send_message(QByteArray payload) {

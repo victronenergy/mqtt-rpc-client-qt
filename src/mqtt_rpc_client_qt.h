@@ -33,7 +33,7 @@ public:
     QMQTT::Client* mqtt_client;
 
 public slots:
-    void send_command(OpCommand* command);
+    QString send_command(OpCommand* command);
     void pingresp();
 
 signals:

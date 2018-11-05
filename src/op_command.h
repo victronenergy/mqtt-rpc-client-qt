@@ -61,6 +61,7 @@ public:
     bool is_finished();
     bool is_successful();
     bool is_timed_out();
+    QString command_id;
 
 protected:
     qint32 get_timeout();
