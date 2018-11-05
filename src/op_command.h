@@ -44,7 +44,7 @@
 class OpCommand
 {
 public:
-    OpCommand(const QHash<QString, QString> _arguments = QHash<QString, QString>());
+    OpCommand(const QJsonObject _arguments = QJsonObject());
     virtual ~OpCommand() {}
 
     QJsonArray serialize();
@@ -70,7 +70,7 @@ protected:
 
     qint64 timestamp = 0;
     bool finished = false;
-    QHash<QString, QString> arguments;
+    QJsonObject arguments;
     QString error_code;
     QString error_message;
     QJsonObject* last_response;

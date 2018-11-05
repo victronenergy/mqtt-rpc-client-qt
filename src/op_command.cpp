@@ -1,6 +1,6 @@
 #include "op_command.h"
 
-OpCommand::OpCommand(const QHash<QString, QString> _arguments) : arguments(_arguments) {
+OpCommand::OpCommand(const QJsonObject _arguments) : arguments(_arguments) {
     for (int i = 0; i < get_parameters().size(); ++i) {
         QString parameter = get_parameters().at(i);
         if(!arguments.contains(parameter)) {

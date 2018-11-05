@@ -1,11 +1,11 @@
 #include "commands.h"
 
-Ping::Ping(const QHash<QString, QString> _arguments) : OpCommand(_arguments) {}
+Ping::Ping(const QJsonObject _arguments) : OpCommand(_arguments) {}
 QString Ping::get_op_command() {
     return "ping";
 }
 
-VupList::VupList(const QHash<QString, QString> _arguments) : OpCommand(_arguments) {}
+VupList::VupList(const QJsonObject _arguments) : OpCommand(_arguments) {}
 QString VupList::get_op_command() {
     return "vuplist";
 }
@@ -26,18 +26,18 @@ void VupList::post_process() {
     */
 }
 
-DupList::DupList(const QHash<QString, QString> _arguments) : VupList(_arguments) {}
+DupList::DupList(const QJsonObject _arguments) : VupList(_arguments) {}
 QString DupList::get_op_command() {
     return "duplist";
 }
 
-VregDeviceList::VregDeviceList(const QHash<QString, QString> _arguments) : OpCommand(_arguments) {}
+VregDeviceList::VregDeviceList(const QJsonObject _arguments) : OpCommand(_arguments) {}
 QString VregDeviceList::get_op_command() {
     // TODO: change this to "vreg-device-list" when it has changed in mqtt-rpc, change when using it with mqtt-rpc >=1.17
     return "vregdevicelist";
 }
 
-VregSetGet::VregSetGet(const QHash<QString, QString> _arguments) : VregDeviceList(_arguments) {}
+VregSetGet::VregSetGet(const QJsonObject _arguments) : VregDeviceList(_arguments) {}
 QString VregSetGet::get_op_command() {
     // TODO: change this to "vreg-get-set" when it has changed in mqtt-rpc, change when using it with mqtt-rpc >=1.17
     return "vregremoteconfig";

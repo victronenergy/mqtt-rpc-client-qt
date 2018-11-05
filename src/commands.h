@@ -5,13 +5,13 @@
 
 class Ping : public OpCommand {
 public:
-    Ping(const QHash<QString, QString> _arguments);
+    Ping(const QJsonObject _arguments);
     QString get_op_command();
 };
 
 class VupList : public OpCommand {
 public:
-    VupList(const QHash<QString, QString> _arguments);
+    VupList(const QJsonObject _arguments);
     QString get_op_command();
     bool is_succesful();
     void post_process();
@@ -19,19 +19,19 @@ public:
 
 class DupList : public VupList {
 public:
-    DupList(const QHash<QString, QString> _arguments);
+    DupList(const QJsonObject _arguments);
     QString get_op_command();
 };
 
 class VregDeviceList : public OpCommand {
 public:
-    VregDeviceList(const QHash<QString, QString> _arguments);
+    VregDeviceList(const QJsonObject _arguments);
     QString get_op_command();
 };
 
 class VregSetGet : public VregDeviceList {
 public:
-    VregSetGet(const QHash<QString, QString> _arguments);
+    VregSetGet(const QJsonObject _arguments);
     QString get_op_command();
     QVector<QString> get_parameters();
 };
