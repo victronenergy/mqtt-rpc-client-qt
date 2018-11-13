@@ -25,7 +25,7 @@
 #define MQTT_RPC_TOPIC_FORMAT "P/%1/%2"
 #define MQTT_RPC_CLIENT_LOGGING_PREFIX "[MQTTRPCCLIENT]" << __FUNCTION__ << ": "
 
-class MQTTRPCCLIENTQTSHARED_EXPORT MqttRpcClientQt : public QObject
+class MQTTRPCCLIENTQTSHARED_EXPORT  MqttRpcClientQt : public QObject
 {
     Q_OBJECT
 public:

@@ -78,7 +78,7 @@ void MqttRpcClientQt::on_message(const QMQTT::Message& message) {
 
            if (obj.contains(MQTT_RPC_RESP_FIELD_FEEDBACK)) {
                command->process_response(obj.find(MQTT_RPC_RESP_FIELD_FEEDBACK).value().toObject(), msg_nr);
-               if(command->is_finished() && command->is_successful()) {
+               if(command->is_finished()) {
                    qDebug() << MQTT_RPC_CLIENT_LOGGING_PREFIX << "Command finished and successful";
                    command->post_process();
                    qDebug() << MQTT_RPC_CLIENT_LOGGING_PREFIX << "Post processed! Emitting command_result signal";
