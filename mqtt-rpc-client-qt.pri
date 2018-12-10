@@ -1,6 +1,6 @@
 QT += testlib gui
 QT += network
-QT += qmqtt
+
 CONFIG += qt warn_on depend_includepath testcase
 
 TEMPLATE = app
