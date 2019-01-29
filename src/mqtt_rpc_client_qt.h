@@ -27,40 +27,40 @@
 
 class MQTTRPCCLIENTQTSHARED_EXPORT  MqttRpcClientQt : public QObject
 {
-    Q_OBJECT
+	Q_OBJECT
 public:
-    MqttRpcClientQt(QHostAddress _host, quint16 _port, QString _site_id);
-    QMQTT::Client* mqtt_client;
+	MqttRpcClientQt(QHostAddress _host, quint16 _port, QString _site_id);
+	QMQTT::Client* mqtt_client;
 
 public slots:
-    QString send_command(OpCommand* command);
-    void pingresp();
+	QString send_command(OpCommand* command);
+	void pingresp();
 
 signals:
-    void command_result(OpCommand* command);
-    void connected();
+	void command_result(OpCommand* command);
+	void connected();
 
 private:
-    QHostAddress host;
-    quint16 port;
-    QString site_id;
+	QHostAddress host;
+	quint16 port;
+	QString site_id;
 
-    QHash<QString, OpCommand*> commands;
-    quint16 mqtt_message_id = 0;
+	QHash<QString, OpCommand*> commands;
+	quint16 mqtt_message_id = 0;
 
-    QMQTT::Client* get_mqtt_client();
+	QMQTT::Client* get_mqtt_client();
 
-    QString get_full_topic(QString topic);
+	QString get_full_topic(QString topic);
 
-    void on_connect();
+	void on_connect();
 
-    void on_message(const QMQTT::Message&);
+	void on_message(const QMQTT::Message&);
 
-    void on_error(const QMQTT::ClientError error);
+	void on_error(const QMQTT::ClientError error);
 
-    void on_subscribe(const QString& topic, const quint8 qos);
+	void on_subscribe(const QString& topic, const quint8 qos);
 
-    void send_message(QByteArray payload);
+	void send_message(QByteArray payload);
 
 };
 

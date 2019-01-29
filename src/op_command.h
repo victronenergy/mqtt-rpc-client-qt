@@ -44,41 +44,41 @@
 class OpCommand
 {
 public:
-    OpCommand(const QJsonObject _arguments = QJsonObject());
-    virtual ~OpCommand() {}
+	OpCommand(const QJsonObject _arguments = QJsonObject());
+	virtual ~OpCommand() {}
 
-    QJsonArray serialize();
-    bool ensure_succesful();
-    void set_finished();
-    // should be void, throws error if fails, doesn't throw error if succesful, error handling not implemented yet hence bool
-    void process_response(QJsonObject op_response, qint32 msgnr);
-    void post_process();
-    void update_timestamp();
-    qint64 get_timestamp();
+	QJsonArray serialize();
+	bool ensure_succesful();
+	void set_finished();
+	// should be void, throws error if fails, doesn't throw error if succesful, error handling not implemented yet hence bool
+	void process_response(QJsonObject op_response, qint32 msgnr);
+	void post_process();
+	void update_timestamp();
+	qint64 get_timestamp();
 
-    QJsonObject* get_result();
+	QJsonObject* get_result();
 
-    bool is_finished();
-    bool is_successful();
-    bool is_timed_out();
-    QString command_id;
+	bool is_finished();
+	bool is_successful();
+	bool is_timed_out();
+	QString command_id;
 
 protected:
-    qint32 get_timeout();
-    virtual QString get_op_command() = 0;
-    virtual QVector <QString> get_succesful_states();
-    virtual QVector <QString> get_parameters();
+	qint32 get_timeout();
+	virtual QString get_op_command() = 0;
+	virtual QVector <QString> get_succesful_states();
+	virtual QVector <QString> get_parameters();
 
-    qint64 timestamp = 0;
-    bool finished = false;
-    QJsonObject arguments;
-    QString error_code;
-    QString error_message;
-    QJsonObject* last_response;
-    QJsonObject* result;
+	qint64 timestamp = 0;
+	bool finished = false;
+	QJsonObject arguments;
+	QString error_code;
+	QString error_message;
+	QJsonObject* last_response;
+	QJsonObject* result;
 
-    // QHash<qint32, QJsonObject> responses;
-    // missing: fields to define the fields that should be set dynamically
+	// QHash<qint32, QJsonObject> responses;
+	// missing: fields to define the fields that should be set dynamically
 };
 
 #endif // OP_COMMAND_H
