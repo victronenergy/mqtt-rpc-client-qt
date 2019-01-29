@@ -33,14 +33,12 @@ QString DupList::get_op_command() {
 
 VregDeviceList::VregDeviceList(const QJsonObject _arguments) : OpCommand(_arguments) {}
 QString VregDeviceList::get_op_command() {
-	// TODO: change this to "vreg-device-list" when it has changed in mqtt-rpc, change when using it with mqtt-rpc >=1.17
-	return "vregdevicelist";
+	return "vreg-device-list";
 }
 
 VregSetGet::VregSetGet(const QJsonObject _arguments) : VregDeviceList(_arguments) {}
 QString VregSetGet::get_op_command() {
-	// TODO: change this to "vreg-get-set" when it has changed in mqtt-rpc, change when using it with mqtt-rpc >=1.17
-	return "vregremoteconfig";
+	return "vreg-get-set";
 }
 QVector<QString> VregSetGet::get_parameters() {
 	return QVector<QString>({"id", "vregs"});
