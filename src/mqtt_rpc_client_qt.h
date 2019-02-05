@@ -1,7 +1,6 @@
 #ifndef MQTT_RPC_CLIENT_QT_H
 #define MQTT_RPC_CLIENT_QT_H
 
-#include "mqtt-rpc-client-qt_global.h"
 #include "op_command.h"
 #include "qmqtt.h"
 
@@ -25,7 +24,7 @@
 #define MQTT_RPC_TOPIC_FORMAT "P/%1/%2"
 #define MQTT_RPC_CLIENT_LOGGING_PREFIX "[MQTTRPCCLIENT]" << __FUNCTION__ << ": "
 
-class MQTTRPCCLIENTQTSHARED_EXPORT  MqttRpcClientQt : public QObject
+class MqttRpcClientQt : public QObject
 {
 	Q_OBJECT
 public:
