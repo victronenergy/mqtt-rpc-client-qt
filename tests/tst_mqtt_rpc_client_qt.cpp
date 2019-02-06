@@ -2,13 +2,15 @@
 #include <QCoreApplication>
 #include <QHostAddress>
 #include <QSignalSpy>
-#include "mqtt_rpc_client_qt.h"
-#include "commands.h"
+#include "../src/mqtt_rpc_client_qt.h"
+#include "../src/commands.h"
 #include "qmqtt.h"
 
 #define HOST "172.16.1.184"
 #define PORT 1883
 #define SITE_ID "9884e3966ef4"
+#define USERNAME "info@elnino-ict.com"
+#define PASSWORD ""
 
 class mqtt_rpc_client_qt : public QObject
 {
@@ -50,19 +52,17 @@ void mqtt_rpc_client_qt::cleanupTestCase()
 
 void mqtt_rpc_client_qt::test_ping()
 {
-    const QHash<QString, QString> _arguments = QHash<QString, QString>();
+    const QJsonObject _arguments;
     Ping cmd(_arguments);
 
     QSignalSpy spy(&mqtt_rpc, &MqttRpcClientQt::command_result);
 
     mqtt_rpc.send_command(&cmd);
-
-    QVERIFY(spy.wait(1000));
 }
 
 void mqtt_rpc_client_qt::test_vreg_device_list()
 {
-    const QHash<QString, QString> _arguments = QHash<QString, QString>();
+    const QJsonObject _arguments;
     VregDeviceList cmd(_arguments);
 
     QSignalSpy spy(&mqtt_rpc, &MqttRpcClientQt::command_result);
