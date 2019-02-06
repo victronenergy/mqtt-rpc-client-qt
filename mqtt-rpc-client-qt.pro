@@ -15,7 +15,6 @@ SOURCES += \
 
 HEADERS += \
     src/mqtt_rpc_client_qt.h \
-    src/mqtt-rpc-client-qt_global.h \
     src/op_command.h \
     src/util.h \
     src/commands.h

@@ -8,15 +8,39 @@ MqttRpcClientQt::MqttRpcClientQt(
 	mqtt_client = get_mqtt_client();
 }
 
+MqttRpcClientQt::MqttRpcClientQt(
+        QString _username,
+        QString _password,
+                QString _site_id
+        ) : username(_username), password(_password), site_id(_site_id) {
+    mqtt_client = get_mqtt_client();
+}
+
+
 QMQTT::Client* MqttRpcClientQt::get_mqtt_client() {
-	QMQTT::Client *client = new QMQTT::Client(host, port);
+    QMQTT::Client *client;
+
+    if(!username.isEmpty() && !password.isEmpty()) {
+        QSslConfiguration sslConfig = QSslConfiguration::defaultConfiguration();
+        QList<QSslCertificate> certList;
+        QSslCertificate cert(QByteArray(MQTT_GLOBAL_BROKER_CERT), QSsl::Pem);
+        certList.append(cert);
+        sslConfig.setCaCertificates(certList);
+
+        client = new QMQTT::Client(MQTT_GLOBAL_BROKER_HOST, MQTT_GLOBAL_BROKER_PORT, sslConfig);
+        client->setUsername(username);
+        client->setPassword(password.toUtf8());
+    } else {
+        client = new QMQTT::Client(host, port);
+    }
+
 	client->setClientId(MQTT_SERVICE_NAME + static_cast<QString>("-") + site_id);
 	connect(client, &QMQTT::Client::connected, this, &MqttRpcClientQt::on_connect);
 	connect(client, &QMQTT::Client::received, this, &MqttRpcClientQt::on_message);
 	connect(client, &QMQTT::Client::error, this, &MqttRpcClientQt::on_error);
 	connect(client, &QMQTT::Client::subscribed, this, &MqttRpcClientQt::on_subscribe);
 	connect(client, &QMQTT::Client::pingresp, this, &MqttRpcClientQt::pingresp);
-	client->connectToHost();
+    client->connectToHost();
 	return client;
 }
 
