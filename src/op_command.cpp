@@ -11,15 +11,15 @@ OpCommand::OpCommand(const QJsonObject _arguments) : arguments(_arguments) {
 	// no error, everything you need is in the arguments
 }
 
-QVector<QString> OpCommand::get_succesful_states() {
+QVector<QString> OpCommand::get_succesful_states() const {
 	return QVector<QString>({STATUS_FINISHED, STATUS_DONE});
 }
 
-QVector<QString> OpCommand::get_parameters() {
+QVector<QString> OpCommand::get_parameters() const {
 	return QVector<QString>();
 }
 
-qint32 OpCommand::get_timeout() {
+qint32 OpCommand::get_timeout() const {
 	return 60;
 }
 
@@ -62,11 +62,11 @@ void OpCommand::set_finished() {
 	finished = true;
 }
 
-bool OpCommand::is_finished() {
+bool OpCommand::is_finished() const {
 	return finished;
 }
 
-bool OpCommand::is_successful() {
+bool OpCommand::is_successful() const {
 	qDebug() << MQTT_RPC_CMD_LOGGING_PREFIX << "is the command finished? " << is_finished();
 
 	if(!is_finished()) {
@@ -87,7 +87,7 @@ bool OpCommand::is_successful() {
 	return success;
 }
 
-bool OpCommand::is_timed_out() {
+bool OpCommand::is_timed_out() const {
 	qDebug() << QDateTime::currentSecsSinceEpoch();
 	if(timestamp == 0) {
 		qWarning() << MQTT_RPC_CMD_LOGGING_PREFIX << "Command not sent error";

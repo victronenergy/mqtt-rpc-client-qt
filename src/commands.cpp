@@ -1,12 +1,12 @@
 #include "commands.h"
 
-Ping::Ping(const QJsonObject _arguments) : OpCommand(_arguments) {}
-QString Ping::get_op_command() {
+Ping::Ping(QJsonObject _arguments) : OpCommand(_arguments) {}
+QString Ping::get_op_command() const {
 	return "ping";
 }
 
 VupList::VupList(const QJsonObject _arguments) : OpCommand(_arguments) {}
-QString VupList::get_op_command() {
+QString VupList::get_op_command() const {
 	return "vuplist";
 }
 bool VupList::is_succesful() {
@@ -27,19 +27,19 @@ void VupList::post_process() {
 }
 
 DupList::DupList(const QJsonObject _arguments) : VupList(_arguments) {}
-QString DupList::get_op_command() {
+QString DupList::get_op_command() const {
 	return "duplist";
 }
 
 VregDeviceList::VregDeviceList(const QJsonObject _arguments) : OpCommand(_arguments) {}
-QString VregDeviceList::get_op_command() {
+QString VregDeviceList::get_op_command() const {
 	return "vreg-device-list";
 }
 
 VregSetGet::VregSetGet(const QJsonObject _arguments) : VregDeviceList(_arguments) {}
-QString VregSetGet::get_op_command() {
+QString VregSetGet::get_op_command() const {
 	return "vreg-get-set";
 }
-QVector<QString> VregSetGet::get_parameters() {
+QVector<QString> VregSetGet::get_parameters() const {
 	return QVector<QString>({"id", "vregs"});
 }
