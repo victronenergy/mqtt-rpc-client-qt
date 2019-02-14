@@ -1,5 +1,9 @@
 #include "mqtt_rpc_client_qt.h"
 
+#include <QJsonDocument>
+#include <QSslConfiguration>
+#include <QtDebug>
+
 #define MQTT_GLOBAL_BROKER_HOST "mqtt-rpc.victronenergy.com"
 #define MQTT_GLOBAL_BROKER_PORT 8883
 #define MQTT_GLOBAL_BROKER_CERT "-----BEGIN CERTIFICATE-----\n"\
@@ -41,43 +45,41 @@ MqttRpcClientQt::MqttRpcClientQt (
 		quint16 _port,
 		QString _site_id
 		) : host(_host), port(_port), site_id(_site_id) {
-	mqtt_client = get_mqtt_client();
+	init_mqtt_client();
 }
 
 MqttRpcClientQt::MqttRpcClientQt(
-        QString _username,
-        QString _password,
-                QString _site_id
-        ) : username(_username), password(_password), site_id(_site_id) {
-    mqtt_client = get_mqtt_client();
+		QString _username,
+		QString _password,
+		QString _site_id
+		) : username(_username), password(_password), site_id(_site_id) {
+	init_mqtt_client();
 }
 
-
-QMQTT::Client* MqttRpcClientQt::get_mqtt_client() {
-    QMQTT::Client *client;
-
+void MqttRpcClientQt::init_mqtt_client()
+{
+	// Unfortunatly we cannot prevent the dynamic allocation of mqtt_client
+	// because there is no method to set the sslConfig once it is created.
     if(!username.isEmpty() && !password.isEmpty()) {
         QSslConfiguration sslConfig = QSslConfiguration::defaultConfiguration();
         QList<QSslCertificate> certList;
-        QSslCertificate cert(QByteArray(MQTT_GLOBAL_BROKER_CERT), QSsl::Pem);
-        certList.append(cert);
+        certList.append(QSslCertificate(QByteArrayLiteral(MQTT_GLOBAL_BROKER_CERT), QSsl::Pem));
         sslConfig.setCaCertificates(certList);
 
-        client = new QMQTT::Client(MQTT_GLOBAL_BROKER_HOST, MQTT_GLOBAL_BROKER_PORT, sslConfig);
-        client->setUsername(username);
-        client->setPassword(password.toUtf8());
+        mqtt_client = new QMQTT::Client(MQTT_GLOBAL_BROKER_HOST, MQTT_GLOBAL_BROKER_PORT, sslConfig);
+        mqtt_client->setUsername(username);
+        mqtt_client->setPassword(password.toUtf8());
     } else {
-        client = new QMQTT::Client(host, port);
+        mqtt_client = new QMQTT::Client(host, port);
     }
 
-	client->setClientId(MQTT_SERVICE_NAME + static_cast<QString>("-") + site_id);
-	connect(client, &QMQTT::Client::connected, this, &MqttRpcClientQt::on_connect);
-	connect(client, &QMQTT::Client::received, this, &MqttRpcClientQt::on_message);
-	connect(client, &QMQTT::Client::error, this, &MqttRpcClientQt::on_error);
-	connect(client, &QMQTT::Client::subscribed, this, &MqttRpcClientQt::on_subscribe);
-	connect(client, &QMQTT::Client::pingresp, this, &MqttRpcClientQt::pingresp);
-    client->connectToHost();
-	return client;
+	mqtt_client->setClientId(MQTT_SERVICE_NAME + static_cast<QString>("-") + site_id);
+	connect(mqtt_client, &QMQTT::Client::connected, this, &MqttRpcClientQt::on_connect);
+	connect(mqtt_client, &QMQTT::Client::received, this, &MqttRpcClientQt::on_message);
+	connect(mqtt_client, &QMQTT::Client::error, this, &MqttRpcClientQt::on_error);
+	connect(mqtt_client, &QMQTT::Client::subscribed, this, &MqttRpcClientQt::on_subscribe);
+	connect(mqtt_client, &QMQTT::Client::pingresp, this, &MqttRpcClientQt::pingresp);
+    mqtt_client->connectToHost();
 }
 
 void MqttRpcClientQt::pingresp() {
