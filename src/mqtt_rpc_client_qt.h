@@ -29,7 +29,6 @@ public:
 
 public slots:
 	QString send_command(OpCommand* command);
-	void pingresp();
 
 signals:
 	void command_result(OpCommand* command);
@@ -49,15 +48,13 @@ private:
 
 	QString get_full_topic(QString topic);
 
+private slots:
 	void on_connect();
-
 	void on_message(const QMQTT::Message&);
-
 	void on_error(const QMQTT::ClientError error);
-
 	void on_subscribe(const QString& topic, const quint8 qos);
-
 	void send_message(QByteArray payload);
+	void pingresp();
 
 };
 
