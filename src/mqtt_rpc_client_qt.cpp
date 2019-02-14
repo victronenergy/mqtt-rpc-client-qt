@@ -163,14 +163,16 @@ void MqttRpcClientQt::on_message(const QMQTT::Message& message) {
 }
 
 QString MqttRpcClientQt::send_command(OpCommand* cmd) {
+	QString commandId;
+	do {
+		commandId = token_urlsafe(8);
+	} while (commands.contains(commandId));
+
 	cmd->update_timestamp();
-	QJsonArray command = cmd->serialize();
-	QJsonObject message {{MQTT_RPC_REQ_FIELD_OPCMD, command}, {MQTT_RPC_FIELD_TIMESTAMP, QString::number(cmd->get_timestamp())}};
-
-	QString commandId = command[1].toObject().value(MQTT_RPC_FIELD_COMMAND_ID).toString();
 	cmd->command_id = commandId;
-
 	commands.insert(commandId, cmd);
+
+	QJsonObject message {{MQTT_RPC_REQ_FIELD_OPCMD, cmd->serialize(commandId)}, {MQTT_RPC_FIELD_TIMESTAMP, QString::number(cmd->get_timestamp())}};
 	QJsonDocument message_doc(message);
 	send_message(message_doc.toJson(QJsonDocument::Compact));
 

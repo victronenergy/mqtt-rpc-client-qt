@@ -23,7 +23,7 @@ qint32 OpCommand::get_timeout() const {
 	return 60;
 }
 
-QJsonArray OpCommand::serialize() {
+QJsonArray OpCommand::serialize(const QString & commandId) {
 	QJsonObject message_parameters = QJsonObject();
 	// set all parameters and their values
 	for (int i = 0; i < get_parameters().size(); ++i) {
@@ -38,7 +38,7 @@ QJsonArray OpCommand::serialize() {
 		message_parameters.insert(MQTT_RPC_REQ_FIELD_SUBCMD, op_command_split[1]);
 	}
 
-	message_parameters.insert(MQTT_RPC_FIELD_COMMAND_ID, token_urlsafe(8));
+	message_parameters.insert(MQTT_RPC_FIELD_COMMAND_ID, commandId);
 
 	QJsonArray result = QJsonArray();
 	result.append(command);
