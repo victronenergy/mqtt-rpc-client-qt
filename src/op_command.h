@@ -47,7 +47,7 @@ public:
 	OpCommand(const QJsonObject _arguments = QJsonObject());
 	virtual ~OpCommand() {}
 
-	QJsonArray serialize();
+	QJsonArray serialize(const QString & commandId);
 	bool ensure_succesful();
 	void set_finished();
 	// should be void, throws error if fails, doesn't throw error if succesful, error handling not implemented yet hence bool
