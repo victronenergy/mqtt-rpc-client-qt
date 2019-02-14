@@ -1,21 +1,14 @@
 #ifndef MQTT_RPC_CLIENT_QT_H
 #define MQTT_RPC_CLIENT_QT_H
 
-#include "op_command.h"
-#include "qmqtt.h"
-
-#include <QByteArray>
-#include <QFile>
-#include <QJsonObject>
-#include <QJsonDocument>
-#include <QHostAddress>
-#include <QVariantMap>
-#include <QtDebug>
-#include <QHash>
-#include <string>
 #include <QObject>
-#include <QSslConfiguration>
+#include <QString>
+#include <QByteArray>
+#include <QHostAddress>
+#include <QHash>
 
+#include "qmqtt.h"
+#include "op_command.h"
 
 class MqttRpcClientQt : public QObject
 {
@@ -25,7 +18,6 @@ public:
 	MqttRpcClientQt(QHostAddress _host, quint16 _port, QString _site_id);
 	// initialiser for mqtt rpc client for online/global mqtt broker
 	MqttRpcClientQt(QString username, QString password, QString _site_id);
-	QMQTT::Client* mqtt_client;
 
 public slots:
 	QString send_command(OpCommand* command);
@@ -35,6 +27,7 @@ signals:
 	void connected();
 
 private:
+	QMQTT::Client * mqtt_client;
 	QHostAddress host;
 	quint16 port;
 	QString username;
@@ -44,7 +37,7 @@ private:
 	QHash<QString, OpCommand*> commands;
 	quint16 mqtt_message_id = 0;
 
-    QMQTT::Client* get_mqtt_client();
+	void init_mqtt_client();
 
 	QString get_full_topic(QString topic);
 
