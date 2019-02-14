@@ -54,7 +54,7 @@ qint64 OpCommand::get_timestamp() {
 	return timestamp;
 }
 
-QJsonObject* OpCommand::get_result() {
+const QJsonObject & OpCommand::get_result() const {
 	return result;
 }
 
@@ -76,8 +76,8 @@ bool OpCommand::is_successful() const {
 	}
 
 	bool success = true;
-	if(last_response->contains(MQTT_RPC_RESP_FIELD_STATUS)) {
-		QString last_response_status = last_response->value(MQTT_RPC_RESP_FIELD_STATUS).toString();
+	if(last_response.contains(MQTT_RPC_RESP_FIELD_STATUS)) {
+		QString last_response_status = last_response.value(MQTT_RPC_RESP_FIELD_STATUS).toString();
 		if(last_response_status == MQTT_RPC_RESP_FIELD_ERROR) {
 			success = false;
 		} else {
@@ -99,7 +99,7 @@ bool OpCommand::is_timed_out() const {
 
 bool OpCommand::ensure_succesful() {
 	if(!is_successful()) {
-		if(last_response->value(MQTT_RPC_RESP_FIELD_ERROR_CODE).toInt() == 999) {
+		if(last_response.value(MQTT_RPC_RESP_FIELD_ERROR_CODE).toInt() == 999) {
 			qWarning() << MQTT_RPC_CMD_LOGGING_PREFIX << "Already processing error";
 			// TODO: return AlreadyProcessingError
 			return false;
@@ -112,7 +112,7 @@ bool OpCommand::ensure_succesful() {
 }
 
 void OpCommand::process_response(QJsonObject op_response, qint32 msg_nr) {
-	last_response = &op_response;
+	last_response = op_response;
 	qDebug() << MQTT_RPC_CMD_LOGGING_PREFIX << "Processed message " << msg_nr << " --- JSON Object: " << op_response;
 	// TOOD: set the last_response to the response with the highest msgnr
 	// TODO: save response to a responses array to be able to handle multi message response mqtt-rpc commands
@@ -126,7 +126,6 @@ void OpCommand::post_process() {
 	//    return;
 	//}
 
-	// copy the last response into a QJsonObject on the heap, be sure to call delete on it afterwards to prevent memory leaking.
-	result = new QJsonObject(*last_response);
+	result = last_response;
 }
 

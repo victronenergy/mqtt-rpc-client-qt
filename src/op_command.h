@@ -56,7 +56,7 @@ public:
 	void update_timestamp();
 	qint64 get_timestamp();
 
-	QJsonObject* get_result();
+	const QJsonObject & get_result() const;
 
 	bool is_finished() const;
 	bool is_successful() const;
@@ -74,8 +74,8 @@ protected:
 	QJsonObject arguments;
 	QString error_code;
 	QString error_message;
-	QJsonObject* last_response;
-	QJsonObject* result;
+	QJsonObject last_response;
+	QJsonObject result;
 
 	// QHash<qint32, QJsonObject> responses;
 	// missing: fields to define the fields that should be set dynamically

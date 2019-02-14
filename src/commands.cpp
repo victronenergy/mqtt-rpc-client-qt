@@ -10,7 +10,7 @@ QString VupList::get_op_command() const {
 	return "vuplist";
 }
 bool VupList::is_succesful() {
-	return last_response->value("exitstatus") == EXIT_STATUS_NORMAL_EXIT;
+	return last_response.value("exitstatus") == EXIT_STATUS_NORMAL_EXIT;
 }
 void VupList::post_process() {
 	ensure_succesful();
