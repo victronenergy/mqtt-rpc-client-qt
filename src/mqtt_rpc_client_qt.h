@@ -18,12 +18,10 @@ public:
 	MqttRpcClientQt(QHostAddress _host, quint16 _port, QString _site_id);
 	// initialiser for mqtt rpc client for online/global mqtt broker
 	MqttRpcClientQt(QString username, QString password, QString _site_id);
-
-public slots:
-	QString send_command(OpCommand* command);
+	QString send_command(OpCommand* command); // This transfers ownership of the object to MqttRpcClientQt
 
 signals:
-	void command_result(OpCommand* command);
+	void command_result(const OpCommand & command);
 	void connected();
 
 private:

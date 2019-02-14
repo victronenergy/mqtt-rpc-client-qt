@@ -127,9 +127,9 @@ void MqttRpcClientQt::on_message(const QMQTT::Message& message) {
 	QString command_id = op_response_map[MQTT_RPC_FIELD_COMMAND_ID].toString();
 	int msg_nr = op_response_map[MQTT_RPC_RESP_FIELD_MSG_NR].toInt();
 
-	if(commands.contains(command_id)) {
+	OpCommand* command = commands.value(command_id);
+	if(command) {
 		qInfo().noquote() << QString("receive < %1 qos=%2: %3").arg(message.topic()).arg(message.qos()).arg(QString::fromUtf8(message.payload()));
-		OpCommand* command = commands[command_id];
 
 		if(op_response_map.value(MQTT_RPC_RESP_FIELD_FINISHED).toBool()) {
 			command->set_finished();
@@ -144,7 +144,7 @@ void MqttRpcClientQt::on_message(const QMQTT::Message& message) {
 					qDebug() << MQTT_RPC_CLIENT_LOGGING_PREFIX << "Command finished and successful";
 					command->post_process();
 					qDebug() << MQTT_RPC_CLIENT_LOGGING_PREFIX << "Post processed! Emitting command_result signal";
-					emit command_result(command);
+					emit command_result(*command);
 				} else {
 					qDebug() << MQTT_RPC_CLIENT_LOGGING_PREFIX << "received a response for a command, but it was unsuccessful or it is part of a command which has multiple response messages. finished: " << command->is_finished() << "successful: " << (command->is_finished() && command->is_successful());
 				}
@@ -159,6 +159,8 @@ void MqttRpcClientQt::on_message(const QMQTT::Message& message) {
 			// command is finished or it timed out, removing it from the client commands to free memory
 			commands.remove(command_id);
 		}
+
+		delete command;
 	} else {
 		qWarning() << MQTT_RPC_CLIENT_LOGGING_PREFIX << "received command with unknown command_id, possibly belongs to another mqtt-rpc client";
 	}
