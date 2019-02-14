@@ -1,15 +1,14 @@
 #include "util.h"
 
+static const char possibleCharacters[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+
 QString token_urlsafe(qint32 length) {
 	// from: https://stackoverflow.com/a/18866593
-	const QString possibleCharacters("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789");
-
-	QString randomString;
+	QString randomString(length, ' ');
 	for(int i=0; i<length; ++i)
 	{
-		int index = qrand() % possibleCharacters.length();
-		QChar nextChar = possibleCharacters.at(index);
-		randomString.append(nextChar);
+		int index = qrand() % sizeof(possibleCharacters);
+		randomString[i] = possibleCharacters[index];
 	}
 	return randomString;
 }
