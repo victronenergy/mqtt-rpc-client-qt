@@ -5,35 +5,35 @@
 
 class Ping : public OpCommand {
 public:
-	Ping(const QJsonObject _arguments);
-	QString get_op_command();
+	Ping(QJsonObject _arguments);
+	QString get_op_command() const override;
 };
 
 class VupList : public OpCommand {
 public:
-	VupList(const QJsonObject _arguments);
-	QString get_op_command();
+	VupList(QJsonObject _arguments);
+	QString get_op_command() const override;
 	bool is_succesful();
 	void post_process();
 };
 
 class DupList : public VupList {
 public:
-	DupList(const QJsonObject _arguments);
-	QString get_op_command();
+	DupList(QJsonObject _arguments);
+	QString get_op_command() const override;
 };
 
 class VregDeviceList : public OpCommand {
 public:
-	VregDeviceList(const QJsonObject _arguments);
-	QString get_op_command();
+	VregDeviceList(QJsonObject _arguments);
+	QString get_op_command() const override;
 };
 
 class VregSetGet : public VregDeviceList {
 public:
-	VregSetGet(const QJsonObject _arguments);
-	QString get_op_command();
-	QVector<QString> get_parameters();
+	VregSetGet(QJsonObject _arguments);
+	QString get_op_command() const override;
+	QVector<QString> get_parameters() const  override;
 };
 
 #endif // PROTOCOL_H

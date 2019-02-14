@@ -58,16 +58,16 @@ public:
 
 	QJsonObject* get_result();
 
-	bool is_finished();
-	bool is_successful();
-	bool is_timed_out();
+	bool is_finished() const;
+	bool is_successful() const;
+	bool is_timed_out() const;
 	QString command_id;
 
 protected:
-	qint32 get_timeout();
-	virtual QString get_op_command() = 0;
-	virtual QVector <QString> get_succesful_states();
-	virtual QVector <QString> get_parameters();
+	qint32 get_timeout() const;
+	virtual QString get_op_command() const = 0;
+	virtual QVector <QString> get_succesful_states() const;
+	virtual QVector <QString> get_parameters() const;
 
 	qint64 timestamp = 0;
 	bool finished = false;
