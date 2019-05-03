@@ -5,7 +5,7 @@
 #include <QtDebug>
 
 #define MQTT_GLOBAL_BROKER_HOST "mqtt-rpc.victronenergy.com"
-#define MQTT_GLOBAL_BROKER_PORT 8883
+#define MQTT_GLOBAL_BROKER_PORT 443
 #define MQTT_GLOBAL_BROKER_CERT "-----BEGIN CERTIFICATE-----\n"\
 "MIIECTCCAvGgAwIBAgIJAM+t3iC8ybEHMA0GCSqGSIb3DQEBCwUAMIGZMQswCQYD\n"\
 "VQQGEwJOTDESMBAGA1UECAwJR3JvbmluZ2VuMRIwEAYDVQQHDAlHcm9uaW5nZW4x\n"\
@@ -60,18 +60,18 @@ void MqttRpcClientQt::init_mqtt_client()
 {
 	// Unfortunatly we cannot prevent the dynamic allocation of mqtt_client
 	// because there is no method to set the sslConfig once it is created.
-    if(!username.isEmpty() && !password.isEmpty()) {
-        QSslConfiguration sslConfig = QSslConfiguration::defaultConfiguration();
-        QList<QSslCertificate> certList;
-        certList.append(QSslCertificate(QByteArrayLiteral(MQTT_GLOBAL_BROKER_CERT), QSsl::Pem));
-        sslConfig.setCaCertificates(certList);
+	if(!username.isEmpty() && !password.isEmpty()) {
+		QSslConfiguration sslConfig = QSslConfiguration::defaultConfiguration();
+		QList<QSslCertificate> certList;
+		certList.append(QSslCertificate(QByteArrayLiteral(MQTT_GLOBAL_BROKER_CERT), QSsl::Pem));
+		sslConfig.setCaCertificates(certList);
 
-        mqtt_client = new QMQTT::Client(MQTT_GLOBAL_BROKER_HOST, MQTT_GLOBAL_BROKER_PORT, sslConfig);
-        mqtt_client->setUsername(username);
-        mqtt_client->setPassword(password.toUtf8());
-    } else {
-        mqtt_client = new QMQTT::Client(host, port);
-    }
+		mqtt_client = new QMQTT::Client(MQTT_GLOBAL_BROKER_HOST, MQTT_GLOBAL_BROKER_PORT, sslConfig);
+		mqtt_client->setUsername(username);
+		mqtt_client->setPassword(password.toUtf8());
+	} else {
+		mqtt_client = new QMQTT::Client(host, port);
+	}
 
 	mqtt_client->setClientId(MQTT_SERVICE_NAME + static_cast<QString>("-") + site_id);
 	connect(mqtt_client, &QMQTT::Client::connected, this, &MqttRpcClientQt::on_connect);
@@ -79,7 +79,7 @@ void MqttRpcClientQt::init_mqtt_client()
 	connect(mqtt_client, &QMQTT::Client::error, this, &MqttRpcClientQt::on_error);
 	connect(mqtt_client, &QMQTT::Client::subscribed, this, &MqttRpcClientQt::on_subscribe);
 	connect(mqtt_client, &QMQTT::Client::pingresp, this, &MqttRpcClientQt::pingresp);
-    mqtt_client->connectToHost();
+	mqtt_client->connectToHost();
 }
 
 void MqttRpcClientQt::pingresp() {
@@ -130,6 +130,8 @@ void MqttRpcClientQt::on_message(const QMQTT::Message& message) {
 	if(commands.contains(command_id)) {
 		qInfo().noquote() << QString("receive < %1 qos=%2: %3").arg(message.topic()).arg(message.qos()).arg(QString::fromUtf8(message.payload()));
 		OpCommand* command = commands[command_id];
+
+		command->update_timestamp();
 
 		if(op_response_map.value(MQTT_RPC_RESP_FIELD_FINISHED).toBool()) {
 			command->set_finished();

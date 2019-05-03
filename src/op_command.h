@@ -51,16 +51,16 @@ public:
 	bool ensure_succesful();
 	void set_finished();
 	// should be void, throws error if fails, doesn't throw error if succesful, error handling not implemented yet hence bool
-	void process_response(QJsonObject op_response, qint32 msgnr);
-	void post_process();
+	virtual void process_response(QJsonObject op_response, qint32 msgnr);
+	virtual void post_process();
 	void update_timestamp();
 	qint64 get_timestamp();
 
 	const QJsonObject & get_result() const;
 
-	bool is_finished() const;
-	bool is_successful() const;
-	bool is_timed_out() const;
+	virtual bool is_finished() const;
+	virtual bool is_successful() const;
+	virtual bool is_timed_out() const;
 	QString command_id;
 
 protected:
@@ -75,9 +75,10 @@ protected:
 	QString error_code;
 	QString error_message;
 	QJsonObject last_response;
+	qint32 last_response_msg_nr = -1;
 	QJsonObject result;
 
-	// QHash<qint32, QJsonObject> responses;
+	QHash<qint32, QJsonObject> responses;
 	// missing: fields to define the fields that should be set dynamically
 };
 

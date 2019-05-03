@@ -1,0 +1,5 @@
+<RCC>
+    <qresource prefix="/">
+        <file>BMV-712.dup.b64</file>
+    </qresource>
+</RCC>

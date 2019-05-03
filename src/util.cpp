@@ -7,7 +7,7 @@ QString token_urlsafe(qint32 length) {
 	QString randomString(length, ' ');
 	for(int i=0; i<length; ++i)
 	{
-		int index = qrand() % sizeof(possibleCharacters);
+		int index = static_cast<unsigned long>(qrand()) % sizeof(possibleCharacters);
 		randomString[i] = possibleCharacters[index];
 	}
 	return randomString;

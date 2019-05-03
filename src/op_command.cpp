@@ -88,7 +88,6 @@ bool OpCommand::is_successful() const {
 }
 
 bool OpCommand::is_timed_out() const {
-	qDebug() << QDateTime::currentSecsSinceEpoch();
 	if(timestamp == 0) {
 		qWarning() << MQTT_RPC_CMD_LOGGING_PREFIX << "Command not sent error";
 		// TODO: raise CommandNotSentError
@@ -112,19 +111,21 @@ bool OpCommand::ensure_succesful() {
 }
 
 void OpCommand::process_response(QJsonObject op_response, qint32 msg_nr) {
-	last_response = op_response;
+	responses[msg_nr] = op_response;
+	if(msg_nr > last_response_msg_nr) {
+		last_response = op_response;
+		last_response_msg_nr = msg_nr;
+	}
 	qDebug() << MQTT_RPC_CMD_LOGGING_PREFIX << "Processed message " << msg_nr << " --- JSON Object: " << op_response;
-	// TOOD: set the last_response to the response with the highest msgnr
-	// TODO: save response to a responses array to be able to handle multi message response mqtt-rpc commands
 }
 
 void OpCommand::post_process() {
 	ensure_succesful();
-	// if(responses.count() > 1) {
-	//    qWarning() << "Not implemented error, please add custom post-processing for this command!";
-	// TODO: return AlreadyProcessingError
-	//    return;
-	//}
+	if(responses.count() > 1) {
+		qWarning() << "Not implemented error, please add custom post-processing for this command!";
+		//TODO: return error
+		return;
+	}
 
 	result = last_response;
 }
