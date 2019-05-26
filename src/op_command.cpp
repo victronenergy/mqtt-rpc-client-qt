@@ -11,19 +11,19 @@ OpCommand::OpCommand(const QJsonObject _arguments) : arguments(_arguments) {
 	// no error, everything you need is in the arguments
 }
 
-QVector<QString> OpCommand::get_succesful_states() {
+QVector<QString> OpCommand::get_succesful_states() const {
 	return QVector<QString>({STATUS_FINISHED, STATUS_DONE});
 }
 
-QVector<QString> OpCommand::get_parameters() {
+QVector<QString> OpCommand::get_parameters() const {
 	return QVector<QString>();
 }
 
-qint32 OpCommand::get_timeout() {
+qint32 OpCommand::get_timeout() const {
 	return 60;
 }
 
-QJsonArray OpCommand::serialize() {
+QJsonArray OpCommand::serialize(const QString & commandId) {
 	QJsonObject message_parameters = QJsonObject();
 	// set all parameters and their values
 	for (int i = 0; i < get_parameters().size(); ++i) {
@@ -38,7 +38,7 @@ QJsonArray OpCommand::serialize() {
 		message_parameters.insert(MQTT_RPC_REQ_FIELD_SUBCMD, op_command_split[1]);
 	}
 
-	message_parameters.insert(MQTT_RPC_FIELD_COMMAND_ID, token_urlsafe(8));
+	message_parameters.insert(MQTT_RPC_FIELD_COMMAND_ID, commandId);
 
 	QJsonArray result = QJsonArray();
 	result.append(command);
@@ -54,7 +54,7 @@ qint64 OpCommand::get_timestamp() {
 	return timestamp;
 }
 
-QJsonObject* OpCommand::get_result() {
+const QJsonObject & OpCommand::get_result() const {
 	return result;
 }
 
@@ -62,11 +62,11 @@ void OpCommand::set_finished() {
 	finished = true;
 }
 
-bool OpCommand::is_finished() {
+bool OpCommand::is_finished() const {
 	return finished;
 }
 
-bool OpCommand::is_successful() {
+bool OpCommand::is_successful() const {
 	qDebug() << MQTT_RPC_CMD_LOGGING_PREFIX << "is the command finished? " << is_finished();
 
 	if(!is_finished()) {
@@ -76,8 +76,8 @@ bool OpCommand::is_successful() {
 	}
 
 	bool success = true;
-	if(last_response->contains(MQTT_RPC_RESP_FIELD_STATUS)) {
-		QString last_response_status = last_response->value(MQTT_RPC_RESP_FIELD_STATUS).toString();
+	if(last_response.contains(MQTT_RPC_RESP_FIELD_STATUS)) {
+		QString last_response_status = last_response.value(MQTT_RPC_RESP_FIELD_STATUS).toString();
 		if(last_response_status == MQTT_RPC_RESP_FIELD_ERROR) {
 			success = false;
 		} else {
@@ -87,8 +87,7 @@ bool OpCommand::is_successful() {
 	return success;
 }
 
-bool OpCommand::is_timed_out() {
-	qDebug() << QDateTime::currentSecsSinceEpoch();
+bool OpCommand::is_timed_out() const {
 	if(timestamp == 0) {
 		qWarning() << MQTT_RPC_CMD_LOGGING_PREFIX << "Command not sent error";
 		// TODO: raise CommandNotSentError
@@ -99,7 +98,7 @@ bool OpCommand::is_timed_out() {
 
 bool OpCommand::ensure_succesful() {
 	if(!is_successful()) {
-		if(last_response->value(MQTT_RPC_RESP_FIELD_ERROR_CODE).toInt() == 999) {
+		if(last_response.value(MQTT_RPC_RESP_FIELD_ERROR_CODE).toInt() == 999) {
 			qWarning() << MQTT_RPC_CMD_LOGGING_PREFIX << "Already processing error";
 			// TODO: return AlreadyProcessingError
 			return false;
@@ -112,21 +111,22 @@ bool OpCommand::ensure_succesful() {
 }
 
 void OpCommand::process_response(QJsonObject op_response, qint32 msg_nr) {
-	last_response = &op_response;
+	responses[msg_nr] = op_response;
+	if(msg_nr > last_response_msg_nr) {
+		last_response = op_response;
+		last_response_msg_nr = msg_nr;
+	}
 	qDebug() << MQTT_RPC_CMD_LOGGING_PREFIX << "Processed message " << msg_nr << " --- JSON Object: " << op_response;
-	// TOOD: set the last_response to the response with the highest msgnr
-	// TODO: save response to a responses array to be able to handle multi message response mqtt-rpc commands
 }
 
 void OpCommand::post_process() {
 	ensure_succesful();
-	// if(responses.count() > 1) {
-	//    qWarning() << "Not implemented error, please add custom post-processing for this command!";
-	// TODO: return AlreadyProcessingError
-	//    return;
-	//}
+	if(responses.count() > 1) {
+		qWarning() << "Not implemented error, please add custom post-processing for this command!";
+		//TODO: return error
+		return;
+	}
 
-	// copy the last response into a QJsonObject on the heap, be sure to call delete on it afterwards to prevent memory leaking.
-	result = new QJsonObject(*last_response);
+	result = last_response;
 }
 

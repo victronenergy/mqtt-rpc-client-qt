@@ -1,47 +1,85 @@
 #include "mqtt_rpc_client_qt.h"
 
-MqttRpcClientQt::MqttRpcClientQt(
+#include <QJsonDocument>
+#include <QSslConfiguration>
+#include <QtDebug>
+
+#define MQTT_GLOBAL_BROKER_HOST "mqtt-rpc.victronenergy.com"
+#define MQTT_GLOBAL_BROKER_PORT 443
+#define MQTT_GLOBAL_BROKER_CERT "-----BEGIN CERTIFICATE-----\n"\
+"MIIECTCCAvGgAwIBAgIJAM+t3iC8ybEHMA0GCSqGSIb3DQEBCwUAMIGZMQswCQYD\n"\
+"VQQGEwJOTDESMBAGA1UECAwJR3JvbmluZ2VuMRIwEAYDVQQHDAlHcm9uaW5nZW4x\n"\
+"HDAaBgNVBAoME1ZpY3Ryb24gRW5lcmd5IEIuVi4xIzAhBgNVBAsMGkNDR1ggQ2Vy\n"\
+"dGlmaWNhdGUgQXV0aG9yaXR5MR8wHQYJKoZIhvcNAQkBFhBzeXNhZG1pbkB5dGVj\n"\
+"Lm5sMCAXDTE0MDkxNzExNTQxOVoYDzIxMTQwODI0MTE1NDE5WjCBmTELMAkGA1UE\n"\
+"BhMCTkwxEjAQBgNVBAgMCUdyb25pbmdlbjESMBAGA1UEBwwJR3JvbmluZ2VuMRww\n"\
+"GgYDVQQKDBNWaWN0cm9uIEVuZXJneSBCLlYuMSMwIQYDVQQLDBpDQ0dYIENlcnRp\n"\
+"ZmljYXRlIEF1dGhvcml0eTEfMB0GCSqGSIb3DQEJARYQc3lzYWRtaW5AeXRlYy5u\n"\
+"bDCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAKVdbAUAElbX+Sh0FATX\n"\
+"yhlJ6zqYMHbqCXawgsOe09zHynDCT4GTXuSuoH2kR/1jE8zvWNLHORXa/eahzWJP\n"\
+"V4WpXuYsFEyU3r8hxA6y+SR06IT7WHdfN6LXN+qt5KLQbmQLxeb1zElMKW4io/WE\n"\
+"N+SWpo5dklXAS6vnq+VRTNwRYnPOUIXKduhvTQp6hEHnLBjYC/Ot8SkC8KtL88cW\n"\
+"pH6d7UmeW3333/vNMEMOTLWlOWrR30P6R+gTjbvzasaB6tlcYqW+jO1YDlBwhSEV\n"\
+"4As4ziQysuy4qvm41KY/o4Q6P6npsh8MaZuRmi/UTxU2DHAbs/on7qaRi6IkVgvg\n"\
+"o6kCAwEAAaNQME4wHQYDVR0OBBYEFPjmM5NYXMw7Wc/TgbLtwPnMAfewMB8GA1Ud\n"\
+"IwQYMBaAFPjmM5NYXMw7Wc/TgbLtwPnMAfewMAwGA1UdEwQFMAMBAf8wDQYJKoZI\n"\
+"hvcNAQELBQADggEBAEFTeGcmxzzXJIfgUrfKLki+hi2mR9g7qomvw6IB1JQHefIw\n"\
+"iKXe14gdp0ytjYL6QoTeEbS2A8VI2FvSbusAzn0JqXdZI+Gwt/CuH0XH40QHpaQ5\n"\
+"UAB5d7EGvbB2op7AA/IyR5TwF/cDb1fRbTaTmwDOIo3kuFGEyNCc+PFrN2MvtPHn\n"\
+"hHH7fo7joY7mUKdP573bJXFsLwZxlqiycJreroLPFqYwgChaMTStQ71rP5i1eGtg\n"\
+"ealQ7kPVtlHmX89tCkfkK77ojm48qgl4gwsI01SikstaPP9fr4ck+U/qIKhSg+Bg\n"\
+"nc9OImY9ubQxe+/GQP4KFme2PPqthEWys7ut2HM=\n"\
+"-----END CERTIFICATE-----"
+
+#define MQTT_SERVICE_NAME "qt"
+#define MQTT_QOS 1
+#define MQTT_TIMEOUT 60
+
+#define MQTT_RPC_RX "out"
+#define MQTT_RPC_TX "in"
+#define MQTT_RPC_TOPIC_FORMAT "P/%1/%2"
+#define MQTT_RPC_CLIENT_LOGGING_PREFIX "[MQTTRPCCLIENT]" << __FUNCTION__ << ": "
+
+MqttRpcClientQt::MqttRpcClientQt (
 		QHostAddress _host,
 		quint16 _port,
 		QString _site_id
 		) : host(_host), port(_port), site_id(_site_id) {
-	mqtt_client = get_mqtt_client();
+	init_mqtt_client();
 }
 
 MqttRpcClientQt::MqttRpcClientQt(
-        QString _username,
-        QString _password,
-                QString _site_id
-        ) : username(_username), password(_password), site_id(_site_id) {
-    mqtt_client = get_mqtt_client();
+		QString _username,
+		QString _password,
+		QString _site_id
+		) : username(_username), password(_password), site_id(_site_id) {
+	init_mqtt_client();
 }
 
+void MqttRpcClientQt::init_mqtt_client()
+{
+	// Unfortunatly we cannot prevent the dynamic allocation of mqtt_client
+	// because there is no method to set the sslConfig once it is created.
+	if(!username.isEmpty() && !password.isEmpty()) {
+		QSslConfiguration sslConfig = QSslConfiguration::defaultConfiguration();
+		QList<QSslCertificate> certList;
+		certList.append(QSslCertificate(QByteArrayLiteral(MQTT_GLOBAL_BROKER_CERT), QSsl::Pem));
+		sslConfig.setCaCertificates(certList);
 
-QMQTT::Client* MqttRpcClientQt::get_mqtt_client() {
-    QMQTT::Client *client;
+		mqtt_client = new QMQTT::Client(MQTT_GLOBAL_BROKER_HOST, MQTT_GLOBAL_BROKER_PORT, sslConfig);
+		mqtt_client->setUsername(username);
+		mqtt_client->setPassword(password.toUtf8());
+	} else {
+		mqtt_client = new QMQTT::Client(host, port);
+	}
 
-    if(!username.isEmpty() && !password.isEmpty()) {
-        QSslConfiguration sslConfig = QSslConfiguration::defaultConfiguration();
-        QList<QSslCertificate> certList;
-        QSslCertificate cert(QByteArray(MQTT_GLOBAL_BROKER_CERT), QSsl::Pem);
-        certList.append(cert);
-        sslConfig.setCaCertificates(certList);
-
-        client = new QMQTT::Client(MQTT_GLOBAL_BROKER_HOST, MQTT_GLOBAL_BROKER_PORT, sslConfig);
-        client->setUsername(username);
-        client->setPassword(password.toUtf8());
-    } else {
-        client = new QMQTT::Client(host, port);
-    }
-
-	client->setClientId(MQTT_SERVICE_NAME + static_cast<QString>("-") + site_id);
-	connect(client, &QMQTT::Client::connected, this, &MqttRpcClientQt::on_connect);
-	connect(client, &QMQTT::Client::received, this, &MqttRpcClientQt::on_message);
-	connect(client, &QMQTT::Client::error, this, &MqttRpcClientQt::on_error);
-	connect(client, &QMQTT::Client::subscribed, this, &MqttRpcClientQt::on_subscribe);
-	connect(client, &QMQTT::Client::pingresp, this, &MqttRpcClientQt::pingresp);
-    client->connectToHost();
-	return client;
+	mqtt_client->setClientId(MQTT_SERVICE_NAME + static_cast<QString>("-") + site_id);
+	connect(mqtt_client, &QMQTT::Client::connected, this, &MqttRpcClientQt::on_connect);
+	connect(mqtt_client, &QMQTT::Client::received, this, &MqttRpcClientQt::on_message);
+	connect(mqtt_client, &QMQTT::Client::error, this, &MqttRpcClientQt::on_error);
+	connect(mqtt_client, &QMQTT::Client::subscribed, this, &MqttRpcClientQt::on_subscribe);
+	connect(mqtt_client, &QMQTT::Client::pingresp, this, &MqttRpcClientQt::pingresp);
+	mqtt_client->connectToHost();
 }
 
 void MqttRpcClientQt::pingresp() {
@@ -93,6 +131,8 @@ void MqttRpcClientQt::on_message(const QMQTT::Message& message) {
 		qInfo().noquote() << QString("receive < %1 qos=%2: %3").arg(message.topic()).arg(message.qos()).arg(QString::fromUtf8(message.payload()));
 		OpCommand* command = commands[command_id];
 
+		command->update_timestamp();
+
 		if(op_response_map.value(MQTT_RPC_RESP_FIELD_FINISHED).toBool()) {
 			command->set_finished();
 			qDebug() << MQTT_RPC_CLIENT_LOGGING_PREFIX << "command with id: " << command_id << " is finished: " << command->is_finished();
@@ -127,14 +167,16 @@ void MqttRpcClientQt::on_message(const QMQTT::Message& message) {
 }
 
 QString MqttRpcClientQt::send_command(OpCommand* cmd) {
+	QString commandId;
+	do {
+		commandId = token_urlsafe(8);
+	} while (commands.contains(commandId));
+
 	cmd->update_timestamp();
-	QJsonArray command = cmd->serialize();
-	QJsonObject message {{MQTT_RPC_REQ_FIELD_OPCMD, command}, {MQTT_RPC_FIELD_TIMESTAMP, QString::number(cmd->get_timestamp())}};
-
-	QString commandId = command[1].toObject().value(MQTT_RPC_FIELD_COMMAND_ID).toString();
 	cmd->command_id = commandId;
-
 	commands.insert(commandId, cmd);
+
+	QJsonObject message {{MQTT_RPC_REQ_FIELD_OPCMD, cmd->serialize(commandId)}, {MQTT_RPC_FIELD_TIMESTAMP, QString::number(cmd->get_timestamp())}};
 	QJsonDocument message_doc(message);
 	send_message(message_doc.toJson(QJsonDocument::Compact));
 
