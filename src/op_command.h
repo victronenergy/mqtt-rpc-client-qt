@@ -62,9 +62,9 @@ public:
 	virtual bool is_successful() const;
 	virtual bool is_timed_out() const;
 	QString command_id;
+	qint32 get_timeout() const;
 
 protected:
-	qint32 get_timeout() const;
 	virtual QString get_op_command() const = 0;
 	virtual QVector <QString> get_succesful_states() const;
 	virtual QVector <QString> get_parameters() const;

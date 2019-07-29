@@ -4,6 +4,8 @@
 #include <QSslConfiguration>
 #include <QtDebug>
 
+namespace {
+
 #define MQTT_GLOBAL_BROKER_HOST "mqtt-rpc.victronenergy.com"
 #define MQTT_GLOBAL_BROKER_PORT 443
 #define MQTT_GLOBAL_BROKER_CERT "-----BEGIN CERTIFICATE-----\n"\
@@ -40,20 +42,45 @@
 #define MQTT_RPC_TOPIC_FORMAT "P/%1/%2"
 #define MQTT_RPC_CLIENT_LOGGING_PREFIX "[MQTTRPCCLIENT]" << __FUNCTION__ << ": "
 
+} // namespace
+
+
 MqttRpcClientQt::MqttRpcClientQt (
-		QHostAddress _host,
+		const QHostAddress& _host,
 		quint16 _port,
-		QString _site_id
-		) : host(_host), port(_port), site_id(_site_id) {
+		const QString& _site_id,
+		const QString& _service_name
+		) : host(_host), port(_port), site_id(_site_id), service_name(_service_name.isEmpty() ? MQTT_SERVICE_NAME: _service_name) {
 	init_mqtt_client();
 }
 
 MqttRpcClientQt::MqttRpcClientQt(
-		QString _username,
-		QString _password,
-		QString _site_id
-		) : username(_username), password(_password), site_id(_site_id) {
+		const QString& _username,
+		const QString& _password,
+		const QString& _site_id,
+		const QString& _service_name
+		) : username(_username), password(_password), site_id(_site_id), service_name(_service_name.isEmpty() ? MQTT_SERVICE_NAME: _service_name) {
 	init_mqtt_client();
+}
+
+MqttRpcClientQt::MqttRpcClientQt(
+		const QString& _host_name,
+		quint16 _port,
+		const QString& _username,
+		const QString& _password,
+		const QString& _site_id,
+		const QString& _service_name
+		) : host_name(_host_name), port(_port), username(_username), password(_password), site_id(_site_id), service_name(_service_name.isEmpty() ? MQTT_SERVICE_NAME: _service_name) {
+	init_mqtt_client();
+}
+
+MqttRpcClientQt::~MqttRpcClientQt()
+{
+	if (mqtt_client) {
+		mqtt_client->disconnectFromHost();
+		delete mqtt_client;
+	}
+	message_expiration_timer.stop();
 }
 
 void MqttRpcClientQt::init_mqtt_client()
@@ -66,14 +93,17 @@ void MqttRpcClientQt::init_mqtt_client()
 		certList.append(QSslCertificate(QByteArrayLiteral(MQTT_GLOBAL_BROKER_CERT), QSsl::Pem));
 		sslConfig.setCaCertificates(certList);
 
-		mqtt_client = new QMQTT::Client(MQTT_GLOBAL_BROKER_HOST, MQTT_GLOBAL_BROKER_PORT, sslConfig);
+		mqtt_client = new QMQTT::Client(host_name.isEmpty() ? MQTT_GLOBAL_BROKER_HOST : host_name,
+						port == 0 ? MQTT_GLOBAL_BROKER_PORT : port, sslConfig);
 		mqtt_client->setUsername(username);
 		mqtt_client->setPassword(password.toUtf8());
 	} else {
 		mqtt_client = new QMQTT::Client(host, port);
 	}
 
-	mqtt_client->setClientId(MQTT_SERVICE_NAME + static_cast<QString>("-") + site_id);
+	connect(&message_expiration_timer, &QTimer::timeout, this, &MqttRpcClientQt::on_message_timeout);
+
+	mqtt_client->setClientId(service_name + "-" + site_id);
 	connect(mqtt_client, &QMQTT::Client::connected, this, &MqttRpcClientQt::on_connect);
 	connect(mqtt_client, &QMQTT::Client::received, this, &MqttRpcClientQt::on_message);
 	connect(mqtt_client, &QMQTT::Client::error, this, &MqttRpcClientQt::on_error);
@@ -86,12 +116,13 @@ void MqttRpcClientQt::pingresp() {
 	qDebug() << MQTT_RPC_CLIENT_LOGGING_PREFIX << "MQTT Ping response";
 }
 
-QString MqttRpcClientQt::get_full_topic(QString topic) {
+QString MqttRpcClientQt::get_full_topic(const QString& topic) {
 	return QString("P/%1/%2").arg(site_id, topic);
 }
 
 void MqttRpcClientQt::on_error(const QMQTT::ClientError error) {
 	qWarning() << MQTT_RPC_CLIENT_LOGGING_PREFIX << "MQTT Error: " << error;
+	emit mqtt_error(error);
 }
 
 void MqttRpcClientQt::on_subscribe(const QString& topic, const quint8 qos) {
@@ -99,15 +130,23 @@ void MqttRpcClientQt::on_subscribe(const QString& topic, const quint8 qos) {
 }
 
 void MqttRpcClientQt::on_connect() {
-	qInfo() << MQTT_RPC_CLIENT_LOGGING_PREFIX << "Connected to broker: " << host.toString() << port;
-	mqtt_client->subscribe(get_full_topic(MQTT_RPC_RX));
+	qInfo() << MQTT_RPC_CLIENT_LOGGING_PREFIX << "Connected to broker: " << (!host.isNull() ?host.toString() : host_name) << port;
+	subscribe(get_full_topic(MQTT_RPC_RX));
 	emit connected();
 }
 
 void MqttRpcClientQt::on_message(const QMQTT::Message& message) {
 	// https://erickveil.github.io/2016/04/06/How-To-Manipulate-JSON-With-C++-and-Qt.html
 	qDebug().noquote() << MQTT_RPC_CLIENT_LOGGING_PREFIX << "got message: " << message.payload();
-	auto json_document = QJsonDocument::fromJson(message.payload());
+	//auto json_document = QJsonDocument::fromJson(message.payload());
+
+	// TEMP FIX FOR INVALID JSON STREAM CHARACTERS
+	auto payload = message.payload();
+	for (auto& ch: payload) {
+		if (ch <= 0x1F)
+			ch = '0';
+	}
+	auto json_document = QJsonDocument::fromJson(payload);
 
 	if(json_document.isNull() && !json_document.isObject()){
 		qWarning() << MQTT_RPC_CLIENT_LOGGING_PREFIX << "Received invalid data (not json or not a json object)";
@@ -127,9 +166,11 @@ void MqttRpcClientQt::on_message(const QMQTT::Message& message) {
 	QString command_id = op_response_map[MQTT_RPC_FIELD_COMMAND_ID].toString();
 	int msg_nr = op_response_map[MQTT_RPC_RESP_FIELD_MSG_NR].toInt();
 
-	if(commands.contains(command_id)) {
+	QMutexLocker locker(&commands_mutex);
+	OpCommand* command = commands.value(command_id);
+	locker.unlock();
+	if(command) {
 		qInfo().noquote() << QString("receive < %1 qos=%2: %3").arg(message.topic()).arg(message.qos()).arg(QString::fromUtf8(message.payload()));
-		OpCommand* command = commands[command_id];
 
 		command->update_timestamp();
 
@@ -143,10 +184,10 @@ void MqttRpcClientQt::on_message(const QMQTT::Message& message) {
 			if (obj.contains(MQTT_RPC_RESP_FIELD_FEEDBACK)) {
 				command->process_response(obj.find(MQTT_RPC_RESP_FIELD_FEEDBACK).value().toObject(), msg_nr);
 				if(command->is_finished()) {
-					qDebug() << MQTT_RPC_CLIENT_LOGGING_PREFIX << "Command finished and successful";
+					qDebug() << MQTT_RPC_CLIENT_LOGGING_PREFIX << "Command finished";
 					command->post_process();
 					qDebug() << MQTT_RPC_CLIENT_LOGGING_PREFIX << "Post processed! Emitting command_result signal";
-					emit command_result(command);
+					emit command_result(*command);
 				} else {
 					qDebug() << MQTT_RPC_CLIENT_LOGGING_PREFIX << "received a response for a command, but it was unsuccessful or it is part of a command which has multiple response messages. finished: " << command->is_finished() << "successful: " << (command->is_finished() && command->is_successful());
 				}
@@ -159,15 +200,22 @@ void MqttRpcClientQt::on_message(const QMQTT::Message& message) {
 
 		if(command->is_timed_out() || command->is_finished()) {
 			// command is finished or it timed out, removing it from the client commands to free memory
+			QMutexLocker locker(&commands_mutex);
 			commands.remove(command_id);
+			delete command;
 		}
 	} else {
 		qWarning() << MQTT_RPC_CLIENT_LOGGING_PREFIX << "received command with unknown command_id, possibly belongs to another mqtt-rpc client";
 	}
+
+	set_message_expiration_timer();
 }
 
 QString MqttRpcClientQt::send_command(OpCommand* cmd) {
 	QString commandId;
+
+	QMutexLocker locker(&commands_mutex);
+
 	do {
 		commandId = token_urlsafe(8);
 	} while (commands.contains(commandId));
@@ -176,6 +224,10 @@ QString MqttRpcClientQt::send_command(OpCommand* cmd) {
 	cmd->command_id = commandId;
 	commands.insert(commandId, cmd);
 
+	locker.unlock();
+
+	set_message_expiration_timer();
+
 	QJsonObject message {{MQTT_RPC_REQ_FIELD_OPCMD, cmd->serialize(commandId)}, {MQTT_RPC_FIELD_TIMESTAMP, QString::number(cmd->get_timestamp())}};
 	QJsonDocument message_doc(message);
 	send_message(message_doc.toJson(QJsonDocument::Compact));
@@ -183,9 +235,63 @@ QString MqttRpcClientQt::send_command(OpCommand* cmd) {
 	return commandId;
 }
 
-void MqttRpcClientQt::send_message(QByteArray payload) {
+void MqttRpcClientQt::send_message(const QByteArray& payload) {
 	QString topic = get_full_topic(MQTT_RPC_TX);
-	mqtt_client->publish(QMQTT::Message(mqtt_message_id, topic, payload));
+	publish(mqtt_message_id, topic, payload);
 	mqtt_message_id++;
 	qInfo().noquote() << MQTT_RPC_CLIENT_LOGGING_PREFIX << QString("Send > %1: %2").arg(topic, QString::fromUtf8(payload));
 }
+
+void MqttRpcClientQt::set_message_expiration_timer()
+{
+	if (!message_expiration_timer.isActive()) {
+		uint8_t nextTimeout = 0; // Next expected timeout in seconds
+
+		QMutexLocker locker(&commands_mutex);
+		for (auto command: commands) {
+			if (!command->is_timed_out()) {
+				auto delay = static_cast<uint8_t>(command->get_timestamp() + command->get_timeout() - QDateTime::currentSecsSinceEpoch());
+				if (delay > 0 && (nextTimeout == 0 || delay < nextTimeout))
+					nextTimeout = delay + 1;
+			}
+		}
+		locker.unlock();
+
+		if (nextTimeout > 0) {
+			message_expiration_timer.setInterval(nextTimeout * 1000);
+			message_expiration_timer.setSingleShot(true);
+			message_expiration_timer.start();
+		}
+	}
+}
+
+void MqttRpcClientQt::on_message_timeout()
+{
+	QMutexLocker locker(&commands_mutex);
+	for (auto it = commands.begin(); it != commands.end();) {
+		OpCommand* command = it.value();
+		if (command->is_timed_out()) {
+			qDebug() << MQTT_RPC_CLIENT_LOGGING_PREFIX << QString("Command %1 timed out!").arg(command->command_id);
+			emit command_result(*command);
+			++ it;
+			commands.remove(command->command_id);
+			delete command;
+		}
+		else
+			++ it;
+	}
+	locker.unlock();
+
+	set_message_expiration_timer();
+}
+
+void MqttRpcClientQt::subscribe(const QString& topic)
+{
+	mqtt_client->subscribe(topic);
+}
+
+void MqttRpcClientQt::publish(quint16 message_id, const QString& topic, const QString& message)
+{
+	mqtt_client->publish(QMQTT::Message(message_id, topic, message.toUtf8()));
+}
+
