@@ -33,7 +33,7 @@ public:
 
 signals:
 	void mqtt_error(int errorCode);
-	void command_result(const OpCommand& command);
+	void command_result(const OpCommand& command, const QString& payload = "");
 	void connected();
 
 protected:

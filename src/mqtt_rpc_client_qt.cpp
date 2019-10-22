@@ -2,6 +2,7 @@
 
 #include <QJsonDocument>
 #include <QSslConfiguration>
+#include <QTextCodec>
 #include <QtDebug>
 
 namespace {
@@ -186,11 +187,8 @@ void MqttRpcClientQt::on_message(const QMQTT::Message& message) {
 				if(command->is_finished()) {
 					qDebug() << MQTT_RPC_CLIENT_LOGGING_PREFIX << "Command finished";
 					command->post_process();
-					qDebug() << MQTT_RPC_CLIENT_LOGGING_PREFIX << "Post processed! Emitting command_result signal";
-					emit command_result(*command);
-				} else {
-					qDebug() << MQTT_RPC_CLIENT_LOGGING_PREFIX << "received a response for a command, but it was unsuccessful or it is part of a command which has multiple response messages. finished: " << command->is_finished() << "successful: " << (command->is_finished() && command->is_successful());
 				}
+				emit command_result(*command, QTextCodec::codecForMib(106)->toUnicode(payload));
 			} else {
 				qWarning() << "received an invalid command missing the " << MQTT_RPC_RESP_FIELD_FEEDBACK << " field in the " << MQTT_RPC_RESP_FIELD_OPRESP << " object";
 			}
