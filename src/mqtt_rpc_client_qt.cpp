@@ -102,8 +102,8 @@ void MqttRpcClientQt::init_mqtt_client()
 	}
 
 	connect(&message_expiration_timer, &QTimer::timeout, this, &MqttRpcClientQt::on_message_timeout);
-
-	mqtt_client->setClientId(service_name + "-" + site_id);
+	int idrnd = rand() % 9000 + 1000;
+	mqtt_client->setClientId(service_name + "-" + site_id + "-" + QString::number(idrnd, 10));
 	connect(mqtt_client, &QMQTT::Client::connected, this, &MqttRpcClientQt::on_connect);
 	connect(mqtt_client, &QMQTT::Client::received, this, &MqttRpcClientQt::on_message);
 	connect(mqtt_client, &QMQTT::Client::error, this, &MqttRpcClientQt::on_error);
