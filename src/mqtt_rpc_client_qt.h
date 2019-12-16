@@ -19,6 +19,8 @@ public:
 	MqttRpcClientQt() = default;
 	// initialiser for mqtt rpc client for local mqtt broker
 	MqttRpcClientQt(const QHostAddress& _host, quint16 _port, const QString& _site_id, const QString& _service_name = "");
+	// initialiser for mqtt rpc client for local mqtt broker
+	MqttRpcClientQt(const QHostAddress& _host, quint16 _port, const QString& username, const QString& password, const QString& _site_id, const QString& _service_name = "");
 	// initialiser for mqtt rpc client for online/global mqtt broker
 	MqttRpcClientQt(const QString& username, const QString& password, const QString& _site_id, const QString& _service_name = "");
 	// custom initialiser

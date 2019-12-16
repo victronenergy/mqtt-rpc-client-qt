@@ -55,6 +55,17 @@ MqttRpcClientQt::MqttRpcClientQt (
 	init_mqtt_client();
 }
 
+MqttRpcClientQt::MqttRpcClientQt (
+		const QHostAddress& _host,
+		quint16 _port,
+		const QString& _username,
+		const QString& _password,
+		const QString& _site_id,
+		const QString& _service_name
+		) : host(_host), port(_port), username(_username), password(_password), site_id(_site_id), service_name(_service_name.isEmpty() ? MQTT_SERVICE_NAME: _service_name) {
+	init_mqtt_client();
+}
+
 MqttRpcClientQt::MqttRpcClientQt(
 		const QString& _username,
 		const QString& _password,
@@ -90,12 +101,20 @@ void MqttRpcClientQt::init_mqtt_client()
 	// because there is no method to set the sslConfig once it is created.
 	if(!username.isEmpty() && !password.isEmpty()) {
 		QSslConfiguration sslConfig = QSslConfiguration::defaultConfiguration();
-		QList<QSslCertificate> certList;
-		certList.append(QSslCertificate(QByteArrayLiteral(MQTT_GLOBAL_BROKER_CERT), QSsl::Pem));
-		sslConfig.setCaCertificates(certList);
 
-		mqtt_client = new QMQTT::Client(host_name.isEmpty() ? MQTT_GLOBAL_BROKER_HOST : host_name,
-						port == 0 ? MQTT_GLOBAL_BROKER_PORT : port, sslConfig);
+		if (host.isNull()) {
+			QList<QSslCertificate> certList;
+			certList.append(QSslCertificate(QByteArrayLiteral(MQTT_GLOBAL_BROKER_CERT), QSsl::Pem));
+			sslConfig.setCaCertificates(certList);
+
+			mqtt_client = new QMQTT::Client(host_name.isEmpty() ? MQTT_GLOBAL_BROKER_HOST : host_name,
+							port == 0 ? MQTT_GLOBAL_BROKER_PORT : port, sslConfig);
+		} else {
+			sslConfig.setPeerVerifyMode(QSslSocket::QueryPeer);
+
+			mqtt_client = new QMQTT::Client(host.toString(), port, sslConfig, false);
+		}
+
 		mqtt_client->setUsername(username);
 		mqtt_client->setPassword(password.toUtf8());
 	} else {
