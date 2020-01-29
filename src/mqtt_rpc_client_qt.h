@@ -29,6 +29,7 @@ public:
 	virtual void send_message(const QByteArray& payload);
 
 	virtual void subscribe(const QString& topic);
+	virtual void unsubscribe(const QString& topic);
 	virtual void publish(quint16 message_id, const QString& topic, const QString& message);
 
 signals:

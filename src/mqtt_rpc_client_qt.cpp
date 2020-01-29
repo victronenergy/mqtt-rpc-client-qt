@@ -102,6 +102,8 @@ void MqttRpcClientQt::init_mqtt_client()
 		mqtt_client = new QMQTT::Client(host, port);
 	}
 
+	mqtt_client->setCleanSession(true);
+
 	connect(&message_expiration_timer, &QTimer::timeout, this, &MqttRpcClientQt::on_message_timeout);
 	int idrnd = rand() % 9000 + 1000;
 	mqtt_client->setClientId(service_name + "-" + site_id + "-" + QString::number(idrnd, 10));
@@ -286,6 +288,11 @@ void MqttRpcClientQt::on_message_timeout()
 void MqttRpcClientQt::subscribe(const QString& topic)
 {
 	mqtt_client->subscribe(topic);
+}
+
+void MqttRpcClientQt::unsubscribe(const QString& topic)
+{
+	mqtt_client->unsubscribe(topic);
 }
 
 void MqttRpcClientQt::publish(quint16 message_id, const QString& topic, const QString& message)
