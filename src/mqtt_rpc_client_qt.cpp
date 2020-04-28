@@ -268,19 +268,25 @@ void MqttRpcClientQt::set_message_expiration_timer()
 void MqttRpcClientQt::on_message_timeout()
 {
 	QMutexLocker locker(&commands_mutex);
+
+	QSet<OpCommand*> expiredCommands;
 	for (auto it = commands.begin(); it != commands.end();) {
 		OpCommand* command = it.value();
 		if (command->is_timed_out()) {
 			qDebug() << MQTT_RPC_CLIENT_LOGGING_PREFIX << QString("Command %1 timed out!").arg(command->command_id);
-			emit command_result(*command);
+			expiredCommands.insert(command);
 			++ it;
 			commands.remove(command->command_id);
-			delete command;
 		}
 		else
 			++ it;
 	}
 	locker.unlock();
+
+	for (auto command : expiredCommands) {
+		emit command_result(*command);
+		delete command;
+	}
 
 	set_message_expiration_timer();
 }
