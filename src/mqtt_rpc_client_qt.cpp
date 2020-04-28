@@ -90,6 +90,7 @@ void MqttRpcClientQt::init_mqtt_client()
 	// because there is no method to set the sslConfig once it is created.
 	if(!username.isEmpty() && !password.isEmpty()) {
 		QSslConfiguration sslConfig = QSslConfiguration::defaultConfiguration();
+        sslConfig.setProtocol(QSsl::TlsV1_0);
 		QList<QSslCertificate> certList;
 		certList.append(QSslCertificate(QByteArrayLiteral(MQTT_GLOBAL_BROKER_CERT), QSsl::Pem));
 		sslConfig.setCaCertificates(certList);
