@@ -26,7 +26,7 @@ public:
 
 	virtual ~MqttRpcClientQt();
 	QString send_command(OpCommand* command); // This transfers ownership of the object to MqttRpcClientQt
-	virtual void send_message(const QByteArray& payload);
+	virtual void send_message(const QByteArray& payload, QString topic = NULL);
 
 	virtual void subscribe(const QString& topic);
 	virtual void unsubscribe(const QString& topic);

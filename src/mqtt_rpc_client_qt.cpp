@@ -235,8 +235,10 @@ QString MqttRpcClientQt::send_command(OpCommand* cmd) {
 	return commandId;
 }
 
-void MqttRpcClientQt::send_message(const QByteArray& payload) {
-	QString topic = get_full_topic(MQTT_RPC_TX);
+void MqttRpcClientQt::send_message(const QByteArray& payload, QString topic) {
+	if (topic.isNull()){
+		topic = get_full_topic(MQTT_RPC_TX);
+	}
 	publish(mqtt_message_id, topic, payload);
 	mqtt_message_id++;
 	qInfo().noquote() << MQTT_RPC_CLIENT_LOGGING_PREFIX << QString("Send > %1: %2").arg(topic, QString::fromUtf8(payload));
