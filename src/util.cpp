@@ -1,5 +1,7 @@
 #include "util.h"
 
+#include <QRandomGenerator>
+
 static const char possibleCharacters[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
 
 QString token_urlsafe(qint32 length) {
@@ -7,7 +9,7 @@ QString token_urlsafe(qint32 length) {
 	QString randomString(length, ' ');
 	for(int i=0; i<length; ++i)
 	{
-		int index = static_cast<unsigned long>(qrand()) % sizeof(possibleCharacters);
+		int index = QRandomGenerator::global()->bounded(int(sizeof(possibleCharacters)));
 		randomString[i] = possibleCharacters[index];
 	}
 	return randomString;
