@@ -1,5 +1,5 @@
 QT       -= gui
-QT       += qmqtt network
+QT       += qmqtt network core5compat
 
 TARGET = mqtt-rpc-client-qt
 TEMPLATE = lib

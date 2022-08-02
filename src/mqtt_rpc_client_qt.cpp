@@ -2,7 +2,7 @@
 
 #include <QJsonDocument>
 #include <QSslConfiguration>
-#include <QTextCodec>
+#include <QtCore5Compat/QTextCodec>
 #include <QtDebug>
 
 namespace {
