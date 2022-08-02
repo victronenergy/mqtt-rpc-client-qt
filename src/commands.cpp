@@ -89,7 +89,7 @@ void VupList::post_process() {
 	QXmlStreamReader xmlReader(xml_string);
 	QJsonArray devices;
 	while (!xmlReader.atEnd()) {
-			if(xmlReader.name() == "device") {
+			if(xmlReader.name().toString() == "device") {
 				QJsonObject device;
 				foreach(const QXmlStreamAttribute &attr, xmlReader.attributes()) {
 					device.insert(attr.name().toString(), attr.value().toString());
