@@ -1,5 +1,4 @@
 QT += network
-CONFIG += qt warn_on depend_includepath
 
 #DEFINES += MQTTRPCCLIENTQT_LIBRARY
 

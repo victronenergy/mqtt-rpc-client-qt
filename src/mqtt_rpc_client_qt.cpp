@@ -2,7 +2,6 @@
 
 #include <QJsonDocument>
 #include <QSslConfiguration>
-#include <QTextCodec>
 #include <QtDebug>
 
 namespace {
@@ -190,7 +189,7 @@ void MqttRpcClientQt::on_message(const QMQTT::Message& message) {
 					qDebug() << MQTT_RPC_CLIENT_LOGGING_PREFIX << "Command finished";
 					command->post_process();
 				}
-				emit command_result(*command, QTextCodec::codecForMib(106)->toUnicode(payload));
+				emit command_result(*command, QString::fromUtf8(payload));
 			} else {
 				qWarning() << "received an invalid command missing the " << MQTT_RPC_RESP_FIELD_FEEDBACK << " field in the " << MQTT_RPC_RESP_FIELD_OPRESP << " object";
 			}
