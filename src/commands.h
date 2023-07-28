@@ -92,7 +92,7 @@ public:
 	QVector<QString> get_parameters() const override;
 	void process_response(QJsonObject op_response, qint32 msgnr) override;
 	bool is_finished() const override;
-	virtual QVector <QString> get_succesful_states() const override;
+	QVector <QString> get_succesful_states() const override;
 protected:
 	QHash<qint32, FileUploadSendChunk> send_chunk_commands;
 };
