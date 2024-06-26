@@ -23,6 +23,8 @@ public:
 	MqttRpcClientQt(const QString& username, const QString& password, const QString& _site_id, const QString& _service_name = "");
 	// custom initialiser
 	MqttRpcClientQt(const QString& _host_name, quint16 _port, const QString& _username, const QString& _password, const QString& _site_id, const QString& _service_name = "");
+	// initialiser por websockets
+	MqttRpcClientQt(const QHostAddress &_host, const QString &_site_id,  quint16 _port, const QString &cookie, const QString &_service_name = "");
 
 	virtual ~MqttRpcClientQt();
 	QString send_command(OpCommand* command); // This transfers ownership of the object to MqttRpcClientQt
@@ -52,9 +54,11 @@ protected:
 
 private:
 	void init_mqtt_client();
+	void init_mqtt_client_websocket(const QString &cookie);
 
 	QString get_full_topic(const QString& topic);
 	void set_message_expiration_timer();
+    void connectClientSignals();
 
 	uint connection_attemtps{ 0 };
 	QMutex commands_mutex;
