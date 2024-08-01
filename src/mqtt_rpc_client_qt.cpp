@@ -131,11 +131,10 @@ void MqttRpcClientQt::init_mqtt_client_websocket(const QString &cookie) {
 	if (!cookie.isEmpty()) {
 		qDebug() << "onTryWebSocketAccess addCookie";
 		QMQTT::WebSocket::setGlobalCustomHeader(host.toString(), "Cookie", cookie.toUtf8());
-		connectClientSignals();
 	} else {
 		qDebug() << "onTryWebSocketAccess There is no cookie";
 	}
-
+	connectClientSignals();
 }
 
 void MqttRpcClientQt::connectClientSignals(){
