@@ -8,8 +8,10 @@
 #include <QHash>
 #include <QTimer>
 #include <QMutex>
+#include <QMqttClient>
+#include <QMqttMessage>
+#include <QWebSocket>
 
-#include "qmqtt.h"
 #include "op_command.h"
 
 class MqttRpcClientQt : public QObject
@@ -32,7 +34,6 @@ public:
 
 	virtual void subscribe(const QString& topic);
 	virtual void unsubscribe(const QString& topic);
-	virtual void publish(quint16 message_id, const QString& topic, const QString& message);
 
 signals:
 	void mqtt_error(int errorCode);
@@ -40,7 +41,9 @@ signals:
 	void connected();
 
 protected:
-	QMQTT::Client* mqtt_client{ nullptr };
+	class WebSocketIODevice;
+	WebSocketIODevice* web_socket_device{nullptr};
+	QMqttClient mqtt_client;
 	QHostAddress host;
 	QString host_name;
 	quint16 port { 0 };
@@ -49,8 +52,6 @@ protected:
 	QString site_id;
 	QString service_name;
 	QTimer message_expiration_timer;
-
-	quint16 mqtt_message_id{ 0 };
 
 private:
 	void init_mqtt_client();
@@ -66,11 +67,43 @@ private:
 
 public slots:
 	virtual void on_connect();
-	virtual void on_message(const QMQTT::Message&);
-	virtual void on_error(const QMQTT::ClientError error);
-	virtual void on_subscribe(const QString& topic, const quint8 qos);
+	virtual void on_message(const QByteArray &message, const QMqttTopicName &topic);
+	virtual void on_error(const QMqttClient::ClientError error);
 	virtual void pingresp();
 	virtual void on_message_timeout();
+};
+
+class MqttRpcClientQt::WebSocketIODevice : public QIODevice
+{
+	Q_OBJECT
+public:
+	WebSocketIODevice(QObject *parent = nullptr);
+
+	bool isSequential() const override;
+	qint64 bytesAvailable() const override;
+
+	bool open(OpenMode mode) override;
+	void close() override;
+
+	qint64 readData(char *data, qint64 maxlen) override;
+	qint64 writeData(const char *data, qint64 len) override;
+
+	void setCookie(QString cookie);
+	void setUrl(const QUrl &url);
+	void setProtocol(const QByteArray &data);
+Q_SIGNALS:
+	void socketConnected();
+
+public slots:
+	void handleBinaryMessage(const QByteArray &msg);
+	void onSocketConnected();
+
+private:
+	QByteArray m_protocol;
+	QByteArray m_buffer;
+	QWebSocket m_socket;
+	QUrl m_url;
+	QString m_cookie;
 };
 
 #endif // MQTT_RPC_CLIENT_QT_H
