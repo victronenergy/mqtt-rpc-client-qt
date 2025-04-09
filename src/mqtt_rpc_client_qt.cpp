@@ -198,6 +198,7 @@ void MqttRpcClientQt::init_mqtt_client_websocket(const QString &cookie) {
 	web_socket_device = new WebSocketIODevice(this);
 	web_socket_device->setUrl(QUrl("wss://" + host.toString() + "/websocket-mqtt"));
 	web_socket_device->setProtocol("mqtt");
+	web_socket_device->setOutgoingFrameSize(1024 * 1024);
 	web_socket_device->setCookie(cookie);
 
 	connectClientSignals();
