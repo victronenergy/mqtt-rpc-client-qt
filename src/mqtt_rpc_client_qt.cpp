@@ -113,6 +113,11 @@ void MqttRpcClientQt::WebSocketIODevice::setProtocol(const QByteArray &data)
 	m_protocol = data;
 }
 
+void MqttRpcClientQt::WebSocketIODevice::setOutgoingFrameSize(quint64 outgoingFrameSize)
+{
+	m_socket.setOutgoingFrameSize(outgoingFrameSize);
+}
+
 void MqttRpcClientQt::WebSocketIODevice::setCookie(QString cookie)
 {
 	m_cookie = cookie;

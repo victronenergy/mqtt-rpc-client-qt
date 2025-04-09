@@ -91,6 +91,7 @@ public:
 	void setCookie(QString cookie);
 	void setUrl(const QUrl &url);
 	void setProtocol(const QByteArray &data);
+	void setOutgoingFrameSize(quint64 outgoingFrameSize);
 Q_SIGNALS:
 	void socketConnected();
 
