@@ -35,6 +35,8 @@ public:
 	virtual void subscribe(const QString& topic);
 	virtual void unsubscribe(const QString& topic);
 
+	virtual void closeAndDelete();
+
 signals:
 	void mqtt_error(int errorCode);
 	void command_result(const OpCommand& command, const QString& payload = "");
@@ -59,11 +61,14 @@ private:
 
 	QString get_full_topic(const QString& topic);
 	void set_message_expiration_timer();
-    void connectClientSignals();
+	void connectClientSignals();
+	int mPendingUnsubs = 0;
+	void cleanupCompleted();
 
 	uint connection_attemtps{ 0 };
 	QMutex commands_mutex;
 	QHash<QString, OpCommand*> commands;
+	QList<QMqttSubscription*> mSubscribedTopics;
 
 public slots:
 	virtual void on_connect();

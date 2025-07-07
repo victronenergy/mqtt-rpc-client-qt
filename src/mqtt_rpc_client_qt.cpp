@@ -174,6 +174,7 @@ MqttRpcClientQt::MqttRpcClientQt (const QHostAddress& _host,
 
 MqttRpcClientQt::~MqttRpcClientQt()
 {
+	disconnect();
 }
 
 void MqttRpcClientQt::init_mqtt_client()
@@ -413,10 +414,75 @@ void MqttRpcClientQt::on_message_timeout()
 
 void MqttRpcClientQt::subscribe(const QString& topic)
 {
-	mqtt_client.subscribe(topic);
+	QMqttSubscription *sub = mqtt_client.subscribe(topic);
+	if (sub) {
+		mSubscribedTopics.append(sub);
+	}
 }
 
 void MqttRpcClientQt::unsubscribe(const QString& topic)
 {
 	mqtt_client.unsubscribe(topic);
+}
+
+void MqttRpcClientQt::cleanupCompleted()
+{
+	connect(&mqtt_client, &QMqttClient::disconnected, this, [this]() {
+		qCritical() << MQTT_RPC_CLIENT_LOGGING_PREFIX << "MQTT client disconnected from host, deleting";
+		deleteLater();
+	});
+
+	mqtt_client.disconnectFromHost();
+
+	// For local MQTT connections using websocket this is necessary otherwise we never get
+	// the disconnected signal
+	if (web_socket_device) {
+		qCritical() << MQTT_RPC_CLIENT_LOGGING_PREFIX << "WebSocket transport: closing socket";
+		if (auto *transport = mqtt_client.transport())
+			transport->close();
+	}
+}
+
+void MqttRpcClientQt::closeAndDelete()
+{
+	qCritical() << MQTT_RPC_CLIENT_LOGGING_PREFIX
+				<< "Disconnecting, clearing and deleting MQTT client"
+				<< mqtt_client.state();
+
+	const auto state = mqtt_client.state();
+	if (state == QMqttClient::Disconnected) {
+		qCritical() << MQTT_RPC_CLIENT_LOGGING_PREFIX
+					<< "Already disconnected, deleting"
+					<< state;
+		deleteLater();
+		return;
+	}
+
+	// Get subscriptions
+	int pending = mSubscribedTopics.size();
+	mPendingUnsubs = pending;
+
+	// If there are no subscriptions, finish
+	if (pending == 0) {
+		cleanupCompleted();
+		return;
+	}
+
+	// Unsubscribe all and track completions
+	for (QMqttSubscription *sub : std::as_const(mSubscribedTopics)) {
+		connect(sub, &QMqttSubscription::stateChanged,
+				this,
+				[this](QMqttSubscription::SubscriptionState s) {
+					if (s == QMqttSubscription::Unsubscribed) {
+						if (--mPendingUnsubs == 0) {
+							qCritical() << MQTT_RPC_CLIENT_LOGGING_PREFIX
+										<< "Unsubscribed from all topics, total:"
+										<< mSubscribedTopics.size();
+							cleanupCompleted();
+						}
+					}
+				});
+
+		sub->unsubscribe();
+	}
 }
