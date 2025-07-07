@@ -32,6 +32,24 @@ public:
 	void post_process() override;
 };
 
+class VeBusConfigRead : public OpCommand {
+public:
+	VeBusConfigRead(QJsonObject _arguments);
+	QString get_op_command() const override;
+	QVector<QString> get_parameters() const override;
+	QVector <QString> get_succesful_states() const override;
+	void post_process() override;
+};
+
+class VeBusConfigWrite : public OpCommand {
+public:
+	VeBusConfigWrite(QJsonObject _arguments);
+	QString get_op_command() const override;
+	QVector<QString> get_parameters() const override;
+	QVector <QString> get_succesful_states() const override;
+	void post_process() override;
+};
+
 class FileExists : public OpCommand {
 public:
 	FileExists(QJsonObject _arguments);

@@ -30,8 +30,9 @@ DeviceUpdate::DeviceUpdate(const QJsonObject _arguments) : OpCommand(_arguments)
 QString DeviceUpdate::get_op_command() const {
 	return "device-update";
 }
+
 QVector<QString> DeviceUpdate::get_parameters() const {
-	return QVector<QString>({"connection_type", "connection_id", "file_md5_hash"});
+	return QVector<QString>({"connection_type", "connection_id", "product_id", "service", "file_md5_hash"});
 }
 QVector<QString> DeviceUpdate::get_succesful_states() const {
 	return QVector<QString>({STATUS_FINISHED});
@@ -40,6 +41,37 @@ void DeviceUpdate::post_process() {
 	return;
 }
 
+VeBusConfigRead::VeBusConfigRead(const QJsonObject _arguments) : OpCommand(_arguments) {}
+
+QString VeBusConfigRead::get_op_command() const
+{
+	return "vebusremoteconfig_read";
+}
+QVector<QString> VeBusConfigRead::get_parameters() const {
+	return QVector<QString>({"servicename"});
+}
+QVector<QString> VeBusConfigRead::get_succesful_states() const {
+	return QVector<QString>({STATUS_FINISHED});
+}
+void VeBusConfigRead::post_process() {
+	return;
+}
+
+VeBusConfigWrite::VeBusConfigWrite(const QJsonObject _arguments) : OpCommand(_arguments) {}
+
+QString VeBusConfigWrite::get_op_command() const
+{
+	return "vebusremoteconfig_write";
+}
+QVector<QString> VeBusConfigWrite::get_parameters() const {
+	return QVector<QString>({"servicename", "file_md5_hash"});
+}
+QVector<QString> VeBusConfigWrite::get_succesful_states() const {
+	return QVector<QString>({STATUS_FINISHED});
+}
+void VeBusConfigWrite::post_process() {
+	return;
+}
 FileExists::FileExists(const QJsonObject _arguments) :OpCommand(_arguments) {}
 QString FileExists::get_op_command() const {
 	return "file-exists";
@@ -150,3 +182,4 @@ bool FileUploadSendChunk::is_finished() const {
 bool FileUploadSendChunk::is_successful() const {
 	return is_finished();
 }
+
