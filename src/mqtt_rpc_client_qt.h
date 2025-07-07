@@ -36,6 +36,7 @@ public:
 	virtual void unsubscribe(const QString& topic);
 
 	virtual void closeAndDelete();
+	QString getClientId() { return mqtt_client.clientId(); }
 
 signals:
 	void mqtt_error(int errorCode);
