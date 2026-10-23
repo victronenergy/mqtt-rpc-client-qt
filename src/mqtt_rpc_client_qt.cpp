@@ -197,7 +197,11 @@ void MqttRpcClientQt::init_mqtt_client_websocket(const QString &cookie) {
 	qDebug() << "MqttRpcClientQt::init_mqtt_client_websocket with cookie: " << cookie;
 
 	web_socket_device = new WebSocketIODevice(this);
-	web_socket_device->setUrl(QUrl("wss://" + host.toString() + "/websocket-mqtt"));
+	// The port is the web server's, which is 443 unless the GX publishes another one
+	QUrl url("wss://" + host.toString() + "/websocket-mqtt");
+	if (port != 0 && port != 443)
+		url.setPort(port);
+	web_socket_device->setUrl(url);
 	web_socket_device->setProtocol("mqtt");
 	web_socket_device->setOutgoingFrameSize(1024 * 1024);
 	web_socket_device->setCookie(cookie);

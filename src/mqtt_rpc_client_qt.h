@@ -25,7 +25,7 @@ public:
 	MqttRpcClientQt(const QString& username, const QString& password, const QString& _site_id, const QString& _service_name = "");
 	// custom initialiser
 	MqttRpcClientQt(const QString& _host_name, quint16 _port, const QString& _username, const QString& _password, const QString& _site_id, const QString& _service_name = "");
-	// initialiser por websockets
+	// initialiser por websockets, _port is the web server's (443 by default)
 	MqttRpcClientQt(const QHostAddress &_host, const QString &_site_id,  quint16 _port, const QString &cookie, const QString &_service_name = "");
 
 	virtual ~MqttRpcClientQt();
